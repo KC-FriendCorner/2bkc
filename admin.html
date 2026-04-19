@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="th">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Admin Dashboard | 2BKC Management</title>
+        <link rel="stylesheet" href="admin-style.css">
+        <link
+            href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap"
+            rel="stylesheet">
+        <link rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    </head>
+    <body>
+        <div class="admin-wrapper">
+            <aside class="sidebar">
+                <div class="sidebar-logo">
+                    <img src="logo.png" alt="2BKC Logo" class="logo-img">
+                    <span>2BKC Admin</span>
+                </div>
+                <nav>
+                    <a href="#" class="active"><i class="fas fa-users-cog"></i>
+                        จัดการสมาชิก</a>
+                    <a href="#"><i class="fas fa-cog"></i> ตั้งค่าระบบ</a>
+                </nav>
+            </aside>
+
+            <main class="main-content">
+                <header class="top-bar">
+                    <h1>จัดการคณะกรรมการชมรม</h1>
+                    <div class="user-info">Admin Account</div>
+                </header>
+
+                <section class="form-section">
+                    <div class="card">
+                        <h3><i class="fas fa-user-plus"></i>
+                            เพิ่มสมาชิกใหม่</h3>
+                        <form id="memberForm">
+                            <div class="grid-form">
+                                <div class="input-group">
+                                    <label>รหัสนักเรียน</label>
+                                    <input type="text" id="student_id" required
+                                        placeholder="เช่น 28001">
+                                </div>
+                                <div class="input-group">
+                                    <label>ปีการศึกษา</label>
+                                    <select id="academic_year">
+                                        <option value="2568">2568</option>
+                                        <option value="2569">2569</option>
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <label>คำนำหน้า</label>
+                                    <select id="prefix">
+                                        <option value="นาย">นาย</option>
+                                        <option value="นางสาว">นางสาว</option>
+                                        <option value="เด็กชาย">เด็กชาย</option>
+                                        <option
+                                            value="เด็กหญิง">เด็กหญิง</option>
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <label>ชื่อ</label>
+                                    <input type="text" id="first_name" required>
+                                </div>
+                                <div class="input-group">
+                                    <label>นามสกุล</label>
+                                    <input type="text" id="last_name" required>
+                                </div>
+                                <div class="input-group">
+                                    <label>ชื่อเล่น</label>
+                                    <input type="text" id="nickname">
+                                </div>
+                                <div class="input-group">
+                                    <label>ฝ่าย</label>
+                                    <select id="department_id"
+                                        onchange="updatePositions()">
+                                        <option value disabled selected>---
+                                            เลือกฝ่าย ---</option>
+                                        <option value="1">ฝ่ายอำนวยการ</option>
+                                        <option value="2">ฝ่ายเหรัญญิก</option>
+                                        <option
+                                            value="3">ฝ่ายรับเรื่องราวร้องทุกข์</option>
+                                        <option value="4">ฝ่ายจัดหาทุน</option>
+                                        <option
+                                            value="5">ฝ่ายสอดส่องดูแล</option>
+                                        <option value="6">ฝ่ายกิจกรรม</option>
+                                        <option
+                                            value="7">ฝ่ายประชาสัมพันธ์</option>
+                                        <option
+                                            value="8">ฝ่ายศูนย์เพื่อนใจ</option>
+                                    </select>
+                                </div>
+
+                                <div class="input-group">
+                                    <label>ตำแหน่ง</label>
+                                    <select id="position" required disabled>
+                                        <option value disabled
+                                            selected>กรุณาเลือกฝ่ายก่อน</option>
+                                    </select>
+                                </div>
+
+                                <input type="hidden" id="priority" value="10">
+                            </div>
+
+                            <div class="input-group full-width">
+                                <label>URL รูปภาพสมาชิก</label>
+                                <input type="url" id="image_url"
+                                    placeholder="https://...">
+                            </div>
+
+                            <div class="button-group"
+                                style="display: flex; gap: 10px; margin-top: 20px;">
+                                <button type="submit" class="btn-submit"
+                                    style="flex: 3;">
+                                    <i class="fas fa-save"></i> บันทึกข้อมูลลง
+                                    Database
+                                </button>
+                                <button type="button" id="btnCancel"
+                                    onclick="resetAdminForm()"
+                                    class="btn-cancel"
+                                    style="flex: 1; display: none; background: #95a5a6; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                                    ยกเลิก
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+
+                <section class="table-section" style="margin-top: 30px;">
+                    <div class="card">
+                        <div class="card-header"
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3><i class="fas fa-list"></i>
+                                รายชื่อสมาชิกในระบบ</h3>
+                            <div class="filter-group">
+                                <select id="filter_year"
+                                    onchange="loadMembersTable()">
+                                    <option value="2568">ปีการศึกษา
+                                        2568</option>
+                                    <option value="2569">ปีการศึกษา
+                                        2569</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="admin-table"
+                                style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr
+                                        style="background: #f8f9fa; text-align: left;">
+                                        <th>รูป</th>
+                                        <th>รหัสนักเรียน</th>
+                                        <th>ชื่อ-นามสกุล</th>
+                                        <th>ฝ่าย</th>
+                                        <th>ตำแหน่ง</th>
+                                        <th>จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="memberTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <script
+            src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+        <script
+            src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+        <script src="admin-script.js"></script>
+    </body>
+</html>

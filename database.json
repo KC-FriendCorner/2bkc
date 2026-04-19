@@ -1,0 +1,33 @@
+{
+  "system_config": {
+    "version": "2.0",
+    "school_code": "SKC",
+    "departments": [
+      {"id": 1, "name": "ฝ่ายอำนวยการ", "icon": "fa-user-tie"},
+      {"id": 2, "name": "ฝ่ายเหรัญญิก", "icon": "fa-file-signature"},
+      {"id": 3, "name": "ฝ่ายกิจกรรม", "icon": "fa-calendar-star"},
+      {"id": 4, "name": "ฝ่ายประชาสัมพันธ์", "icon": "fa-bullhorn"},
+      {"id": 5, "name": "ฝ่ายรับเรื่องราวร้องทุกข์", "icon": "fa-comments-heart"},
+      {"id": 6, "name": "ฝ่ายสอดส่องดูแล", "icon": "fa-eye"},
+      {"id": 7, "name": "ฝ่ายจัดหาทุน", "icon": "fa-hand-holding-dollar"},
+      {"id": 8, "name": "ฝ่ายศูนย์เพื่อนใจ", "icon": "fa-chart-line"}
+    ]
+  },
+  "members": [
+    {
+      "student_id": "32001",
+      "prefix": "นาย",
+      "first_name": "ขรรค์ชัย",
+      "last_name": "ใจดี",
+      "nickname": "เก่ง",
+      "position": "ประธานชมรม",
+      "department_id": 1,
+      "academic_year": "2567",
+      "priority": 1,
+      "image_url": "images/members/67_32001.webp",
+      "is_active": true,
+      "created_at": "2024-05-20T10:00:00Z",
+      "updated_by": "admin_01"
+    }
+  ]
+}
