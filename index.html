@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="th">
     <head>
@@ -197,4 +198,167 @@
 
         <script src="script.js"></script>
     </body>
+=======
+<!DOCTYPE html>
+<html lang="th">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <title>TO BE NUMBER ONE | Official Website</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;800;900&display=swap"
+            rel="stylesheet">
+        <link rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+
+        <div id="petal-container"></div>
+
+        <nav class="navbar">
+            <div class="nav-container">
+                <a href="#" class="logo" onclick="navigateTo('home')">
+                    <div class="logo-icon">BE</div>
+                    <span class="logo-text">TO BE <span class="highlight">NUMBER
+                            ONE</span></span>
+                </a>
+                <ul class="nav-links">
+                    <li><a href="javascript:void(0)"
+                            onclick="navigateTo('home')"
+                            class="nav-item">หน้าหลัก</a></li>
+                    <li><a href="javascript:void(0)"
+                            onclick="navigateTo('about')"
+                            class="nav-item">เกี่ยวกับเรา</a></li>
+                    <li><a href="javascript:void(0)"
+                            onclick="navigateTo('members')"
+                            class="nav-item">คณะกรรมการ</a></li>
+                    <li><a href="javascript:void(0)"
+                            onclick="navigateTo('contact')"
+                            class="nav-item">ติดต่อเรา</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <main class="content-wrapper">
+
+            <section id="home" class="page-content active">
+                <div class="hero-section center-mode">
+                    <div class="hero-glow-effect center-glow"></div>
+
+                    <div class="hero-content">
+                        <div class="hero-logo-wrapper">
+                            <div class="logo-circle">
+                                <img
+                                    src="img/2bkc.jpg"
+                                    alt="2BKC Logo">
+                            </div>
+                        </div>
+
+                        <h1 class="main-title">
+                            2BKC <span class="gradient-text">TO BE NUMBER
+                                ONE</span>
+                        </h1>
+
+                        <div class="school-info">
+                            <p class="hero-subtitle">
+                                ชมรมทูบีนัมเบอร์วัน โรงเรียนสะเดา
+                                "ขรรค์ชัยกัมพลานนท์อนุสรณ์"
+                            </p>
+                            <p class="hero-subtitle-en">
+                                TO BE NUMBER ONE SADAO KHANCHAI
+                            </p>
+                        </div>
+
+                        <div class="hero-btns center-btns">
+                            <button class="btn-primary shadow-glow"
+                                onclick="navigateTo('about')">
+                                <i class="fas fa-seedling"></i> เกี่ยวกับชมรม
+                            </button>
+                            <button class="btn-outline"
+                                onclick="navigateTo('members')">
+                                คณะกรรมการ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="about" class="page-content">
+                <h2 class="section-header">📖 เกี่ยวกับชมรม</h2>
+                <div class="about-container">
+                    <div class="vision-card glass-card">
+                        <i class="fas fa-eye"></i>
+                        <h3>วิสัยทัศน์ (Vision)</h3>
+                        <p>มุ่งเน้นการสร้างภูมิคุ้มกันทางจิตใจแก่เยาวชน
+                            ป้องกันและแก้ไขปัญหายาเสพติดอย่างยั่งยืน</p>
+                    </div>
+                    <div class="mission-card glass-card">
+                        <i class="fas fa-bullseye"></i>
+                        <h3>พันธกิจ (Mission)</h3>
+                        <ul>
+                            <li>สร้างค่านิยมที่ถูกต้องในกลุ่มเยาวชน</li>
+                            <li>สร้างเครือข่ายสมาชิกที่เข้มแข็ง</li>
+                            <li>ส่งเสริมกิจกรรมที่ใช้เวลาว่างให้เกิดประโยชน์</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section id="members" class="page-content">
+                <div class="members-container">
+                    <h2 class="section-header">👥 คณะกรรมการดำเนินงาน</h2>
+
+                    <div class="year-filter" id="yearFilterContainer">
+                        <button class="filter-btn active"
+                            onclick="changeYear('2568')">ปีการศึกษา
+                            2568</button>
+                        <button class="filter-btn"
+                            onclick="changeYear('2569')">ปีการศึกษา
+                            2569</button>
+                    </div>
+
+                    <div id="memberDisplayArea"
+                        class="member-wrapper active-year">
+                    </div>
+                </div>
+            </section>
+
+            <div id="memberModal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <span class="close-modal"
+                        onclick="closeModal()">&times;</span>
+                    <div id="modalBody">
+                    </div>
+                </div>
+            </div>
+
+            <script
+                src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+            <script
+                src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+            <section id="contact" class="page-content">
+                <div class="contact-box glass-card">
+                    <h2>ติดต่อเรา 🌹</h2>
+                    <p>ร่วมติดตามข่าวสารและกิจกรรมได้ทางโซเชียลมีเดีย</p>
+                    <div class="social-group">
+                        <a href="#" class="social-btn fb"><i
+                                class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-btn ig"><i
+                                class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-btn tt"><i
+                                class="fab fa-tiktok"></i></a>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <script src="members.js"></script>
+
+        <script src="script.js"></script>
+    </body>
+>>>>>>> 0da468c1cc4fbd031a4a419b40d3a6cafcb9a8f9
 </html>
