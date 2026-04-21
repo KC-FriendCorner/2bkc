@@ -74,20 +74,56 @@ function showMemberDetail(encodedData) {
   if (!modal || !modalBody) return;
 
   modalBody.innerHTML = `
-        <div class="detail-container">
-            <div class="detail-img-box">
-                <img src="${member.image_url}" class="detail-img" onerror="this.src='https://via.placeholder.com/150'">
+    <div class="member-detail-wrapper">
+        <div class="member-header">
+            <div class="profile-circle">
+                <img src="${member.image_url}" onerror="this.src='https://via.placeholder.com/150'">
             </div>
-            <div class="detail-text">
-                <h3>${member.prefix}${member.first_name} ${member.last_name}</h3>
-                <div class="detail-badge">${member.position}</div>
-                <div class="detail-info-grid">
-                    <p><strong>ชื่อเล่น:</strong> ${member.nickname || "-"}</p>
-                    <p><strong>ฝ่าย:</strong> ${deptNames[member.department_id] || "ไม่ระบุ"}</p>
-                </div>
+            <div class="profile-main-info">
+                <h2>${member.prefix}${member.first_name} ${member.last_name} (${member.nickname || "-"})</h2>
+                <span class="position-badge"><i class="fas fa-id-badge"></i> ${member.position}</span>
             </div>
         </div>
-    `;
+
+        <hr class="divider">
+
+        <div class="info-section">
+            <div class="info-item">
+                <div class="info-icon"><i class="fas fa-users"></i></div>
+                <div class="info-content">
+                    <label>ฝ่าย</label>
+                    <span>${deptNames[member.department_id] || "ไม่ระบุ"}</span>
+                </div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-icon"><i class="fas fa-graduation-cap"></i></div>
+                <div class="info-content">
+                    <label>ระดับชั้น / ปีการศึกษา</label>
+                    <span>${member.student_level || "ไม่ระบุ"} | ปีการศึกษา ${member.academic_year}</span>
+                </div>
+            </div>
+
+            <div class="info-item">
+    <div class="info-icon"><i class="fab fa-instagram"></i></div>
+    <div class="info-content">
+        <label>ช่องทางการติดต่อ</label>
+        ${
+          member.instagram
+            ? `<a href="https://www.instagram.com/${member.instagram.replace("@", "")}/" 
+                  target="_blank" 
+                  style="text-decoration: none; color: #E4405F; font-weight: 500; display: flex; align-items: center; gap: 4px;">
+                  @${member.instagram.replace("@", "")} 
+                  <i class="fas fa-external-link-alt" style="font-size: 0.7rem;"></i>
+               </a>`
+            : `<span style="color: #999;">ไม่มีข้อมูล</span>`
+        }
+    </div>
+</div>
+
+        </div>
+    </div>
+`;
   modal.style.display = "flex";
 }
 

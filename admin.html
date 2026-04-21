@@ -4,6 +4,13 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Admin Dashboard | 2BKC Management</title>
+
+        <script>
+        if (!sessionStorage.getItem('isAdminLoggedIn')) {
+            window.location.href = 'login.html';
+        }
+    </script>
+
         <link rel="stylesheet" href="admin-style.css">
         <link
             href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap"
@@ -15,26 +22,42 @@
         <div class="admin-wrapper">
             <aside class="sidebar">
                 <div class="sidebar-logo">
-                    <img src="logo.png" alt="2BKC Logo" class="logo-img">
+                    <img src="img/2bkc.jpg" alt="2BKC Logo" class="logo-img">
                     <span>2BKC Admin</span>
                 </div>
                 <nav>
                     <a href="#" class="active"><i class="fas fa-users-cog"></i>
                         จัดการสมาชิก</a>
                     <a href="#"><i class="fas fa-cog"></i> ตั้งค่าระบบ</a>
+                    <a href="javascript:void(0)" onclick="logoutAdmin()"
+                        style="color: #ff4d4d; margin-top: 20px;">
+                        <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
+                    </a>
                 </nav>
             </aside>
 
             <main class="main-content">
-                <header class="top-bar">
+                <header class="top-bar"
+                    style="display: flex; justify-content: space-between; align-items: center;">
                     <h1>จัดการคณะกรรมการชมรม</h1>
-                    <div class="user-info">Admin Account</div>
+
+                    <div class="user-control"
+                        style="display: flex; align-items: center; gap: 15px;">
+                        <div id="adminDisplayName"
+                            style="font-weight: 600; color: #3b82f6; background: #eef2ff; padding: 5px 15px; border-radius: 20px; border: 1px solid #d0d7de;">
+                            <i class="fas fa-user-shield"></i> Loading...
+                        </div>
+                        <button onclick="logoutAdmin()" class="btn-logout"
+                            style="background: #ff4d4d; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: 0.3s;">
+                            <i class="fas fa-power-off"></i> ออกจากระบบ
+                        </button>
+                    </div>
                 </header>
 
                 <section class="form-section">
                     <div class="card">
                         <h3><i class="fas fa-user-plus"></i>
-                            เพิ่มสมาชิกใหม่</h3>
+                            เพิ่ม/แก้ไขข้อมูลสมาชิก</h3>
                         <form id="memberForm">
                             <div class="grid-form">
                                 <div class="input-group">
@@ -72,6 +95,23 @@
                                     <input type="text" id="nickname">
                                 </div>
                                 <div class="input-group">
+                                    <label>ระดับชั้น</label>
+                                    <select id="student_level">
+                                        <option value="ม.3">ม.3</option>
+                                        <option value="ม.4">ม.4</option>
+                                        <option value="ม.5">ม.5</option>
+                                        <option value="ม.6">ม.6</option>
+                                        <option value="ปวช.1">ปวช.1</option>
+                                        <option value="ปวช.2">ปวช.2</option>
+                                        <option value="ปวช.3">ปวช.3</option>
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <label>Instagram (ไม่ต้องใส่ @)</label>
+                                    <input type="text" id="instagram"
+                                        placeholder="เช่น 2b.sadaokhanchai">
+                                </div>
+                                <div class="input-group">
                                     <label>ฝ่าย</label>
                                     <select id="department_id"
                                         onchange="updatePositions()">
@@ -91,7 +131,6 @@
                                             value="8">ฝ่ายศูนย์เพื่อนใจ</option>
                                     </select>
                                 </div>
-
                                 <div class="input-group">
                                     <label>ตำแหน่ง</label>
                                     <select id="position" required disabled>
@@ -99,7 +138,6 @@
                                             selected>กรุณาเลือกฝ่ายก่อน</option>
                                     </select>
                                 </div>
-
                                 <input type="hidden" id="priority" value="10">
                             </div>
 
@@ -124,6 +162,57 @@
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </section>
+
+                <section id="settings-section" class="form-section"
+                    style="margin-top: 30px; display: none;">
+
+                    <div class="card" style="margin-top: 20px;">
+                        <h3><i class="fas fa-user-shield"></i> จัดการบัญชีแอดมิน
+                            (Firebase)</h3>
+                        <form id="adminManageForm">
+                            <div class="grid-form">
+                                <div class="input-group">
+                                    <label>Username (รหัสแอดมิน)</label>
+                                    <input type="text" id="adm_username"
+                                        required>
+                                </div>
+                                <div class="input-group">
+                                    <label>Password (รหัสผ่าน)</label>
+                                    <input type="text" id="adm_password"
+                                        required>
+                                </div>
+                            </div>
+                            <div
+                                style="margin-top: 10px; display: flex; gap: 10px;">
+                                <button type="submit" id="btnAdminSubmit"
+                                    class="btn-submit"
+                                    style="flex: 3; background:#3498db;">
+                                    <i class="fas fa-save"></i>
+                                    บันทึก/เพิ่มแอดมิน
+                                </button>
+                                <button type="button" id="btnAdminCancel"
+                                    onclick="resetAdminManageForm()"
+                                    style="flex: 1; display: none; background:#95a5a6; color:white; border:none; border-radius:8px; cursor:pointer;">
+                                    ยกเลิก
+                                </button>
+                            </div>
+                        </form>
+
+                        <div class="table-responsive" style="margin-top:20px;">
+                            <table style="width:100%;">
+                                <thead>
+                                    <tr
+                                        style="text-align:left; background:#f4f4f4;">
+                                        <th>Username</th>
+                                        <th>Password</th>
+                                        <th>จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminListTable"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </section>
 

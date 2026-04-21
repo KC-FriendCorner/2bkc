@@ -1,16 +1,23 @@
 <!DOCTYPE html>
 <html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TO BE NUMBER ONE | Secure Login</title>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>TO BE NUMBER ONE | Secure Login</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&family=Inter:wght@400;600;700&display=swap"
+            rel="stylesheet">
+        <link rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+        <script
+            src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+        <script
+            src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+        <script
+            src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
-    <style>
+        <style>
         :root {
             --primary-color: #3b82f6;
             --secondary-color: #6366f1;
@@ -37,82 +44,98 @@
         .btn-submit { width: 100%; padding: 16px; margin-top: 10px; border: none; border-radius: 30px; background: linear-gradient(to right, var(--primary-color), var(--secondary-color)); color: white; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.3s; }
         .btn-submit:hover { transform: scale(1.02); opacity: 0.9; }
     </style>
-</head>
-<body>
+    </head>
+    <body>
 
-    <div class="login-card">
-        <div class="logo-wrapper">
-            <img src="img/2bkc.jpg" alt="Logo">
-        </div>
-
-        <div class="header">
-            <h1>TO BE NUMBER ONE</h1>
-            <p style="font-size: 12px; color: gray; margin-bottom: 30px;">ระบบจัดการสมาชิก (Firebase)</p>
-        </div>
-
-        <form id="loginForm">
-            <div class="form-group">
-                <div class="input-box">
-                    <i class="fas fa-envelope"></i>
-                    <input type="email" id="email" placeholder="อีเมลแอดมิน" required>
-                </div>
+        <div class="login-card">
+            <div class="logo-wrapper">
+                <img src="img/2bkc.jpg" alt="Logo">
             </div>
 
-            <div class="form-group">
-                <div class="input-box">
-                    <i class="fas fa-lock"></i>
-                    <input type="password" id="password" placeholder="รหัสผ่าน" required>
-                </div>
+            <div class="header">
+                <h1>TO BE NUMBER ONE</h1>
+                <p
+                    style="font-size: 12px; color: gray; margin-bottom: 30px;">ระบบจัดการสมาชิก
+                    (Firebase)</p>
             </div>
 
-            <button type="submit" class="btn-submit" id="submitBtn">
-                <span>เข้าสู่ระบบ</span>
-            </button>
-        </form>
-    </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <div class="input-box">
+                        <i class="fas fa-envelope"></i>
+                        <input type="text" id="email"
+                            placeholder="ชื่อผู้ใช้แอดมิน (Username)" required>
+                    </div>
+                </div>
 
-    <script>
-        // 1. ตั้งค่า Firebase Configuration (ข้อมูลของคุณ)
-        const firebaseConfig = {
-            apiKey: "AIzaSyDi_0wqnyZ8AChvTXguj3Xwv07jEW7TOok",
-            authDomain: "bkc-bc48f.firebaseapp.com",
-            projectId: "bkc-bc48f",
-            storageBucket: "bkc-bc48f.firebasestorage.app",
-            messagingSenderId: "486986521782",
-            appId: "1:486986521782:web:da67a6a47d6f01b98e9a17"
-        };
+                <div class="form-group">
+                    <div class="input-box">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="password"
+                            placeholder="รหัสผ่าน" required>
+                    </div>
+                </div>
 
-        // เริ่มต้น Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    <span>เข้าสู่ระบบ</span>
+                </button>
+            </form>
+        </div>
 
-        const loginForm = document.getElementById('loginForm');
-        const submitBtn = document.getElementById('submitBtn');
+        <script>
+        // 1. ตั้งค่า Firebase Configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyDi_0wqnyZ8AChvTXguj3Xwv07jEW7TOok",
+    authDomain: "bkc-bc48f.firebaseapp.com",
+    projectId: "bkc-bc48f",
+    storageBucket: "bkc-bc48f.firebasestorage.app",
+    messagingSenderId: "486986521782",
+    appId: "1:486986521782:web:da67a6a47d6f01b98e9a17",
+    databaseURL: "https://bkc-bc48f-default-rtdb.asia-southeast1.firebasedatabase.app" // เพิ่มบรรทัดนี้
+};
 
-        // 2. ฟังก์ชัน Login ด้วย Firebase
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังตรวจสอบ...';
+// เริ่มต้น Firebase
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+const database = firebase.database();
 
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+const loginForm = document.getElementById('loginForm');
+const submitBtn = document.getElementById('submitBtn');
 
-            // ใช้คำสั่งของ Firebase แทน Supabase
-            auth.signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    // Login สำเร็จ!
-                    console.log("Login Success!");
-                    window.location.href = 'admin.html'; // ไปหน้า Admin
-                })
-                .catch((error) => {
-                    // Login ไม่สำเร็จ
-                    alert('⚠️ เข้าสู่ระบบไม่สำเร็จ: ' + error.message);
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = 'เข้าสู่ระบบ';
-                });
+// 2. ฟังก์ชัน Login ด้วย Realtime Database
+loginForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังตรวจสอบ...';
+
+    const username = document.getElementById('email').value.trim(); // ใช้ช่อง email เดิมแต่ใส่ username
+    const password = document.getElementById('password').value.trim();
+
+    // ไปดึงข้อมูลจากโหนด admin/[username]
+    database.ref('admin/' + username).once('value')
+        .then((snapshot) => {
+            const adminData = snapshot.val();
+
+            if (adminData && adminData.password == password) {
+                // Login สำเร็จ!
+                alert('✅ ยินดีต้อนรับเข้าสู่ระบบ');
+                // เก็บสถานะล็อกอินสั้นๆ ใน SessionStorage
+                sessionStorage.setItem('isAdminLoggedIn', 'true');
+                sessionStorage.setItem('adminUsername', username); // เพิ่มบรรทัดนี้เพื่อเก็บชื่อแอดมิน
+                window.location.href = 'admin.html';
+            } else {
+                // ข้อมูลไม่ตรง หรือไม่มีชื่อผู้ใช้นี้
+                throw new Error('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+            }
+        })
+        .catch((error) => {
+            alert('⚠️ ' + error.message);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'เข้าสู่ระบบ';
         });
+});
     </script>
-</body>
+    </body>
 </html>
