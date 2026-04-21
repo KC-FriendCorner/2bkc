@@ -1,33 +1,5 @@
 // ==========================================
-// 1. ระบบกลีบกุหลาบปลิว (Rose Petals Engine)
-// ==========================================
-function initPetalSystem() {
-  const container = document.getElementById("petal-container");
-  if (!container) return;
-  const petals = ["🌹", "🌸", "🥀"];
-
-  function createPetal() {
-    const petal = document.createElement("div");
-    petal.classList.add("rose-petal");
-    petal.innerText = petals[Math.floor(Math.random() * petals.length)];
-
-    const startPos = Math.random() * 100;
-    const duration = Math.random() * 5 + 5;
-    const size = Math.random() * 10 + 15;
-
-    petal.style.left = startPos + "vw";
-    petal.style.animationDuration = duration + "s";
-    petal.style.fontSize = size + "px";
-    petal.style.opacity = Math.random() * 0.5 + 0.3;
-
-    container.appendChild(petal);
-    setTimeout(() => petal.remove(), duration * 1000);
-  }
-  setInterval(createPetal, 600);
-}
-
-// ==========================================
-// 2. ระบบนำทางหน้าเว็บ (Single Page Application)
+// 1. ระบบนำทางหน้าเว็บ (Single Page Application)
 // ==========================================
 function navigateTo(pageId) {
   // 1. จัดการการแสดงผลหน้า Content
@@ -52,11 +24,10 @@ function navigateTo(pageId) {
   // 3. อัปเดตสถานะเมนู (Navigation Items)
   const navItems = document.querySelectorAll(".nav-item");
   navItems.forEach((item) => {
-    // ใช้ dataset หรือตรวจสอบค่าที่ส่งเข้าฟังก์ชันจาก onclick โดยตรง
     const isSelected = item.getAttribute("onclick")?.includes(`'${pageId}'`);
 
     if (isSelected) {
-      item.classList.add("nav-active"); // ใช้ Class แทนการเขียน Inline Style
+      item.classList.add("nav-active");
     } else {
       item.classList.remove("nav-active");
     }
@@ -64,7 +35,7 @@ function navigateTo(pageId) {
 }
 
 // ==========================================
-// 3. ระบบ Modal (แสดงรายละเอียดสมาชิก)
+// 2. ระบบ Modal (แสดงรายละเอียดสมาชิก)
 // ==========================================
 function showMemberDetail(encodedData) {
   const member = JSON.parse(decodeURIComponent(encodedData));
@@ -77,7 +48,7 @@ function showMemberDetail(encodedData) {
     <div class="member-detail-wrapper">
         <div class="member-header">
             <div class="profile-circle">
-                <img src="${member.image_url}" onerror="this.src='https://via.placeholder.com/150'">
+                <img src="${member.image_url}" loading="lazy" onerror="this.src='https://via.placeholder.com/150'">
             </div>
             <div class="profile-main-info">
                 <h2>${member.prefix}${member.first_name} ${member.last_name} (${member.nickname || "-"})</h2>
@@ -105,22 +76,21 @@ function showMemberDetail(encodedData) {
             </div>
 
             <div class="info-item">
-    <div class="info-icon"><i class="fab fa-instagram"></i></div>
-    <div class="info-content">
-        <label>ช่องทางการติดต่อ</label>
-        ${
-          member.instagram
-            ? `<a href="https://www.instagram.com/${member.instagram.replace("@", "")}/" 
-                  target="_blank" 
-                  style="text-decoration: none; color: #E4405F; font-weight: 500; display: flex; align-items: center; gap: 4px;">
-                  @${member.instagram.replace("@", "")} 
-                  <i class="fas fa-external-link-alt" style="font-size: 0.7rem;"></i>
-               </a>`
-            : `<span style="color: #999;">ไม่มีข้อมูล</span>`
-        }
-    </div>
-</div>
-
+                <div class="info-icon"><i class="fab fa-instagram"></i></div>
+                <div class="info-content">
+                    <label>ช่องทางการติดต่อ</label>
+                    ${
+                      member.instagram
+                        ? `<a href="https://www.instagram.com/${member.instagram.replace("@", "")}/" 
+                              target="_blank" 
+                              style="text-decoration: none; color: #E4405F; font-weight: 500; display: flex; align-items: center; gap: 4px;">
+                              @${member.instagram.replace("@", "")} 
+                              <i class="fas fa-external-link-alt" style="font-size: 0.7rem;"></i>
+                           </a>`
+                        : `<span style="color: #999;">ไม่มีข้อมูล</span>`
+                    }
+                </div>
+            </div>
         </div>
     </div>
 `;
@@ -138,12 +108,35 @@ window.onclick = function (event) {
 };
 
 // ==========================================
-// 4. เริ่มการทำงาน (Initialization)
+// 3. เริ่มการทำงาน (Initialization)
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
-  initPetalSystem();
+  // ยกเลิกระบบกุหลาบแล้ว
   navigateTo("home");
   if (typeof changeYear === "function") {
     changeYear("2568");
   }
 });
+
+function toggleMobileMenu() {
+    const btn = document.getElementById('mobileMenuBtn');
+    const overlay = document.getElementById('mobileMenuOverlay');
+    
+    btn.classList.toggle('active');
+    overlay.classList.toggle('show');
+}
+
+function handleMobileNav(pageId) {
+    navigateTo(pageId); // ฟังก์ชันเปลี่ยนหน้าเดิมของคุณ
+    toggleMobileMenu(); // ปิดเมนูหลังจากเลือก
+}
+
+// ปิดเมนูเมื่อคลิกข้างนอก
+window.onclick = function(event) {
+    const overlay = document.getElementById('mobileMenuOverlay');
+    const btn = document.getElementById('mobileMenuBtn');
+    if (!overlay.contains(event.target) && !btn.contains(event.target)) {
+        overlay.classList.remove('show');
+        btn.classList.remove('active');
+    }
+}

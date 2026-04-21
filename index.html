@@ -13,9 +13,6 @@
         <link rel="stylesheet" href="style.css">
     </head>
     <body>
-
-        <div id="petal-container"></div>
-
         <nav class="navbar">
             <div class="nav-container">
                 <a href="#" class="logo"
@@ -25,6 +22,12 @@
                     </div>
                     <span class="logo-text">TO BE NUMBER ONE</span>
                 </a>
+
+                <div class="mobile-menu-toggle" id="mobileMenuBtn"
+                    onclick="toggleMobileMenu()">
+                    <i class="fas fa-bars"></i>
+                </div>
+
                 <ul class="nav-links">
                     <li><a href="javascript:void(0)"
                             onclick="navigateTo('home')"
@@ -41,6 +44,23 @@
                 </ul>
             </div>
         </nav>
+
+        <div class="mobile-menu-overlay" id="mobileMenuOverlay">
+            <div class="mobile-menu-content">
+                <a href="javascript:void(0)"
+                    onclick="handleMobileNav('home')"><i
+                        class="fas fa-home"></i> หน้าหลัก</a>
+                <a href="javascript:void(0)"
+                    onclick="handleMobileNav('about')"><i
+                        class="fas fa-info-circle"></i> เกี่ยวกับชมรม</a>
+                <a href="javascript:void(0)"
+                    onclick="handleMobileNav('members')"><i
+                        class="fas fa-users"></i> คณะกรรมการ</a>
+                <a href="javascript:void(0)"
+                    onclick="handleMobileNav('contact')"><i
+                        class="fas fa-phone"></i> ช่องทางการติดต่อ</a>
+            </div>
+        </div>
 
         <main class="content-wrapper">
 
