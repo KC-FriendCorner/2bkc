@@ -4,12 +4,11 @@
 const firebaseConfig = {
   apiKey: "AIzaSyDi_0wqnyZ8AChvTXguj3Xwv07jEW7TOok",
   authDomain: "bkc-bc48f.firebaseapp.com",
+  databaseURL: "https://bkc-bc48f-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "bkc-bc48f",
   storageBucket: "bkc-bc48f.firebasestorage.app",
   messagingSenderId: "486986521782",
-  appId: "1:486986521782:web:da67a6a47d6f01b98e9a17",
-  databaseURL:
-    "https://bkc-bc48f-default-rtdb.asia-southeast1.firebasedatabase.app",
+  appId: "1:486986521782:web:da67a6a47d6f01b98e9a17"
 };
 
 if (!firebase.apps.length) {
