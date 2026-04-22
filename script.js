@@ -1,70 +1,79 @@
 // ==========================================
 // 1. ระบบนำทางหน้าเว็บ (Single Page Application)
 // ==========================================
+// ==========================================
+// ระบบนำทาง (Navigation System) แบบ Hash
+// ==========================================
+
 function navigateTo(pageId) {
-  // 1. จัดการการแสดงผลหน้า Content
-  const pages = document.querySelectorAll(".page-content");
-  let targetFound = false;
+    // 1. อัปเดต URL เป็นแบบ Hash (เช่น index.html#members)
+    // วิธีนี้ Refresh ยังไงก็ไม่ Error 404
+    window.location.hash = pageId;
 
-  pages.forEach((page) => {
-    if (page.id === pageId) {
-      page.classList.add("active");
-      targetFound = true;
-    } else {
-      page.classList.remove("active");
-    }
-  });
-
-  // ถ้าไม่เจอหน้าเป้าหมาย ไม่ต้องทำขั้นตอนต่อไป
-  if (!targetFound) return;
-
-  // 2. เลื่อนขึ้นบนสุดแบบลื่นไหล
-  window.scrollTo({ top: 0, behavior: "smooth" });
-
-  // 3. อัปเดตสถานะเมนู (Navigation Items)
-  const navItems = document.querySelectorAll(".nav-item");
-  navItems.forEach((item) => {
-    const isSelected = item.getAttribute("onclick")?.includes(`'${pageId}'`);
-
-    if (isSelected) {
-      item.classList.add("nav-active");
-    } else {
-      item.classList.remove("nav-active");
-    }
-  });
-
-  // 1. เปลี่ยน URL บน Address Bar (เช่น จาก / เป็น /members)
-  // โดยใช้ '/' นำหน้าเพื่อให้เป็น Absolute Path
-  window.history.pushState({ page: pageId }, "", `/${pageId}`);
-
-  // 2. เรียกฟังก์ชันแสดงผลหน้าจอ
-  showPage(pageId);
+    // 2. เรียกฟังก์ชันแสดงผลหน้าจอ
+    showPage(pageId);
 }
 
-// ฟังก์ชันสำหรับแสดง/ซ่อน Content (ใช้ร่วมกับ navigateTo)
 function showPage(pageId) {
-  document.querySelectorAll(".page-content").forEach((p) => {
-    p.style.display = "none";
-  });
+    const pages = document.querySelectorAll(".page-content");
+    let targetFound = false;
 
-  const target = document.getElementById(pageId);
-  if (target) {
-    target.style.display = "block";
-    window.scrollTo(0, 0);
-  }
+    // 3. จัดการการซ่อน/แสดง Content ด้วย Class และ Display
+    pages.forEach((page) => {
+        if (page.id === pageId) {
+            page.style.display = "block";
+            // เพิ่ม class active สำหรับทำแอนิเมชั่น Fade-in (ถ้ามี)
+            setTimeout(() => page.classList.add("active"), 10); 
+            targetFound = true;
+        } else {
+            page.style.display = "none";
+            page.classList.remove("active");
+        }
+    });
+
+    // ถ้าพิมพ์ URL มั่วมา ให้กลับไปหน้าหลัก
+    if (!targetFound && pageId !== 'home') {
+        navigateTo('home');
+        return;
+    }
+
+    // 4. เลื่อนขึ้นบนสุด
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    // 5. อัปเดตสถานะเมนู (Navbar)
+    updateNavUI(pageId);
 }
 
+// ฟังก์ชันอัปเดตสีปุ่มใน Navbar
+function updateNavUI(pageId) {
+    const navItems = document.querySelectorAll(".nav-item");
+    navItems.forEach((item) => {
+        // ตรวจสอบว่าปุ่มนี้มี onclick ที่ตรงกับหน้าปัจจุบันไหม
+        const isSelected = item.getAttribute("onclick")?.includes(`'${pageId}'`);
+        if (isSelected) {
+            item.classList.add("nav-active"); // ใช้ class ตามที่คุณตั้งใน CSS
+        } else {
+            item.classList.remove("nav-active");
+        }
+    });
+}
+
+// ==========================================
+// ระบบตรวจจับเหตุการณ์ (Event Listeners)
+// ==========================================
+
+// 1. เมื่อโหลดหน้าเว็บครั้งแรก (รวมถึงตอน Refresh)
 window.addEventListener("load", () => {
-  // ดึงคำสุดท้ายของ URL มาเช็คว่าเป็นหน้าไหน
-  const path = window.location.pathname.split("/").pop() || "home";
-  navigateTo(path);
+    // อ่านค่าจาก Hash เช่น #members -> members
+    const path = window.location.hash.replace("#", "") || "home";
+    showPage(path);
 });
 
-// 4. จัดการตอนผู้ใช้กดปุ่ม Back/Forward ของ Browser
-window.onpopstate = (event) => {
-    const page = (event.state && event.state.page) || 'home';
-    showPage(page);
-};
+// 2. เมื่อมีการเปลี่ยน Hash (เช่น กดปุ่ม Back/Forward ของ Browser)
+window.addEventListener("hashchange", () => {
+    const path = window.location.hash.replace("#", "") || "home";
+    showPage(path);
+});
 
 // ==========================================
 // 2. ระบบ Modal (แสดงรายละเอียดสมาชิก)

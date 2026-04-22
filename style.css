@@ -623,8 +623,10 @@ body {
 .page-content {
   display: none;
   opacity: 0;
+  transition: opacity 0.4s ease-in-out;
 }
 .page-content.active {
+  opacity: 1;
   display: block;
   animation: fadeIn 0.4s ease forwards;
 }
@@ -1986,4 +1988,20 @@ body {
 
 .custom-select:focus {
     border-color: #E11D48;
+}
+
+/* เมื่อเมนูถูกเลือก */
+.nav-item.active {
+    color: #E11D48 !important; /* สีแดง */
+    font-weight: 900;
+}
+
+.nav-item.active::after {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, #b91c1c, #D4AF37); /* แดง-ทอง */
+    margin-top: 4px;
+    border-radius: 10px;
 }
