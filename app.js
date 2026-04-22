@@ -1,28 +1,17 @@
-function setupNotifications() {
+function initNotification() {
     const messaging = firebase.messaging();
-    const database = firebase.database();
-
+    
     messaging.requestPermission()
-        .then(() => {
-            console.log('Permission granted!');
-            return messaging.getToken();
-        })
+        .then(() => messaging.getToken())
         .then((token) => {
             if (token) {
-                console.log('User Token:', token);
-                // เก็บ Token ลงใน Database ที่พาธ /fcm_tokens
-                // ใช้ token เป็น key (ตัดจุดออกเพราะ DB ไม่ยอมรับจุดใน Key)
+                // เก็บ Token ลง Database (เปลี่ยนจุดเป็น _ เพื่อให้ DB ยอมรับ)
                 const safeToken = token.replace(/\./g, '_');
-                database.ref('fcm_tokens/' + safeToken).set({
+                firebase.database().ref('fcm_tokens/' + safeToken).set({
                     token: token,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                    updatedAt: firebase.database.ServerValue.TIMESTAMP
                 });
             }
         })
-        .catch((err) => {
-            console.log('Unable to get permission:', err);
-        });
+        .catch((err) => console.log('User denied notification', err));
 }
-
-// เรียกใช้งานเมื่อโหลดหน้าเว็บ หรือเมื่อผู้ใช้กดปุ่ม "เปิดแจ้งเตือน"
-// setupNotifications();
