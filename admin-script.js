@@ -277,9 +277,14 @@ function deleteMember(year, id, name) {
   }
 }
 
-// โหลดข้อมูลเริ่มต้น
+// แก้ไขส่วน "โหลดข้อมูลเริ่มต้น" (ประมาณบรรทัดที่ 245)
 document.addEventListener("DOMContentLoaded", () => {
   loadMembersTable();
+  loadAdminList(); // โหลดรายชื่อแอดมิน
+
+  // --- เพิ่มบรรทัดนี้เพื่อกำหนดให้หน้าแรกคือหน้าข่าวสาร ---
+  showSection("news");
+
   const filterYear = document.getElementById("filter_year");
   if (filterYear) filterYear.addEventListener("change", loadMembersTable);
 });
@@ -314,19 +319,18 @@ document.querySelectorAll(".sidebar nav a").forEach((link, index) => {
 
 // --- ส่วนจัดการแอดมิน (Admin Management) ---
 
-
 // 1. โหลดรายชื่อแอดมินมาแสดง พร้อมปุ่มแก้ไขและลบ
 function loadAdminList() {
-    const adminTable = document.getElementById('adminListTable');
-    if (!adminTable) return;
+  const adminTable = document.getElementById("adminListTable");
+  if (!adminTable) return;
 
-    database.ref('admin').on('value', (snapshot) => {
-        adminTable.innerHTML = "";
-        const admins = snapshot.val();
-        
-        if (admins) {
-            Object.keys(admins).forEach(username => {
-                const row = `
+  database.ref("admin").on("value", (snapshot) => {
+    adminTable.innerHTML = "";
+    const admins = snapshot.val();
+
+    if (admins) {
+      Object.keys(admins).forEach((username) => {
+        const row = `
                     <tr style="border-bottom: 1px solid #eee;">
                         <td style="padding:10px; font-weight:600;">${username}</td>
                         <td style="padding:10px;">${admins[username].password}</td>
@@ -339,76 +343,404 @@ function loadAdminList() {
                             </button>
                         </td>
                     </tr>`;
-                adminTable.insertAdjacentHTML('beforeend', row);
-            });
-        }
-    });
+        adminTable.insertAdjacentHTML("beforeend", row);
+      });
+    }
+  });
 }
 
 // 2. ฟังก์ชันเตรียมการแก้ไข (เอาข้อมูลขึ้นไปบนฟอร์ม)
 function prepareEditAdmin(user, pass) {
-    const userField = document.getElementById('adm_username');
-    const passField = document.getElementById('adm_password');
-    const submitBtn = document.getElementById('btnAdminSubmit');
-    const cancelBtn = document.getElementById('btnAdminCancel');
+  const userField = document.getElementById("adm_username");
+  const passField = document.getElementById("adm_password");
+  const submitBtn = document.getElementById("btnAdminSubmit");
+  const cancelBtn = document.getElementById("btnAdminCancel");
 
-    userField.value = user;
-    userField.readOnly = true; // ห้ามแก้ Username เพราะเป็น Key ของ Database
-    userField.style.background = "#f0f0f0";
-    
-    passField.value = pass;
-    passField.focus();
+  userField.value = user;
+  userField.readOnly = true; // ห้ามแก้ Username เพราะเป็น Key ของ Database
+  userField.style.background = "#f0f0f0";
 
-    submitBtn.innerHTML = '<i class="fas fa-sync-alt"></i> อัปเดตรหัสผ่าน';
-    submitBtn.style.background = "#e67e22"; // เปลี่ยนสีให้รู้ว่ากำลังแก้ไข
-    cancelBtn.style.display = "block";
+  passField.value = pass;
+  passField.focus();
+
+  submitBtn.innerHTML = '<i class="fas fa-sync-alt"></i> อัปเดตรหัสผ่าน';
+  submitBtn.style.background = "#e67e22"; // เปลี่ยนสีให้รู้ว่ากำลังแก้ไข
+  cancelBtn.style.display = "block";
 }
 
 // 3. ฟังก์ชันรีเซ็ตฟอร์มกลับเป็นโหมดเพิ่มแอดมินปกติ
 function resetAdminManageForm() {
-    const userField = document.getElementById('adm_username');
-    const submitBtn = document.getElementById('btnAdminSubmit');
-    const cancelBtn = document.getElementById('btnAdminCancel');
+  const userField = document.getElementById("adm_username");
+  const submitBtn = document.getElementById("btnAdminSubmit");
+  const cancelBtn = document.getElementById("btnAdminCancel");
 
-    document.getElementById('adminManageForm').reset();
-    
-    userField.readOnly = false;
-    userField.style.background = "#ffffff";
-    
-    submitBtn.innerHTML = '<i class="fas fa-save"></i> บันทึก/เพิ่มแอดมิน';
-    submitBtn.style.background = "#3498db";
-    cancelBtn.style.display = "none";
+  document.getElementById("adminManageForm").reset();
+
+  userField.readOnly = false;
+  userField.style.background = "#ffffff";
+
+  submitBtn.innerHTML = '<i class="fas fa-save"></i> บันทึก/เพิ่มแอดมิน';
+  submitBtn.style.background = "#3498db";
+  cancelBtn.style.display = "none";
 }
 
 // 4. บันทึกข้อมูล (ใช้ได้ทั้งเพิ่มใหม่และอัปเดต)
-document.getElementById('adminManageForm').addEventListener('submit', function(e) {
+document
+  .getElementById("adminManageForm")
+  .addEventListener("submit", function (e) {
     e.preventDefault();
-    
-    const username = document.getElementById('adm_username').value.trim();
-    const password = document.getElementById('adm_password').value.trim();
 
-    if(username && password) {
-        database.ref(`admin/${username}`).set({
-            password: password
-        }).then(() => {
-            alert('✅ ดำเนินการสำเร็จ');
-            resetAdminManageForm();
-        }).catch(err => alert('❌ ผิดพลาด: ' + err.message));
+    const username = document.getElementById("adm_username").value.trim();
+    const password = document.getElementById("adm_password").value.trim();
+
+    if (username && password) {
+      database
+        .ref(`admin/${username}`)
+        .set({
+          password: password,
+        })
+        .then(() => {
+          alert("✅ ดำเนินการสำเร็จ");
+          resetAdminManageForm();
+        })
+        .catch((err) => alert("❌ ผิดพลาด: " + err.message));
     }
-});
+  });
 
 // 5. ลบแอดมิน
 function deleteAdmin(username) {
-    const currentAdmin = sessionStorage.getItem('adminUsername');
-    if (username === currentAdmin) {
-        alert("❌ คุณไม่สามารถลบบัญชีที่กำลังใช้งานอยู่ได้");
-        return;
-    }
+  const currentAdmin = sessionStorage.getItem("adminUsername");
+  if (username === currentAdmin) {
+    alert("❌ คุณไม่สามารถลบบัญชีที่กำลังใช้งานอยู่ได้");
+    return;
+  }
 
-    if (confirm(`คุณต้องการลบแอดมิน ${username} ใช่หรือไม่?`)) {
-        database.ref(`admin/${username}`).remove();
-    }
+  if (confirm(`คุณต้องการลบแอดมิน ${username} ใช่หรือไม่?`)) {
+    database.ref(`admin/${username}`).remove();
+  }
 }
 
 // เรียกใช้งาน
 document.addEventListener("DOMContentLoaded", loadAdminList);
+
+function toggleSidebar() {
+  const sidebar = document.querySelector(".sidebar");
+  const overlay = document.querySelector(".sidebar-overlay");
+
+  sidebar.classList.toggle("active");
+  overlay.classList.toggle("active");
+
+  // เปลี่ยนไอคอนปุ่ม (ทางเลือก)
+  const icon = document.querySelector(".menu-toggle i");
+  if (sidebar.classList.contains("active")) {
+    icon.className = "fas fa-times"; // เปลี่ยนเป็นรูปกากบาท
+  } else {
+    icon.className = "fas fa-bars"; // เปลี่ยนกลับเป็น 3 ขีด
+  }
+}
+
+// ปิดเมนูเมื่อกดที่รายการเมนู (สำหรับอุปกรณ์มือถือ)
+document.querySelectorAll(".sidebar nav a").forEach((link) => {
+  link.addEventListener("click", () => {
+    if (window.innerWidth <= 768) {
+      toggleSidebar();
+    }
+  });
+});
+
+function logoutAdmin() {
+  // 1. แสดงกล่องยืนยันเพื่อป้องกันการกดพลาด
+  if (confirm("คุณต้องการออกจากระบบใช่หรือไม่?")) {
+    // 2. ลบข้อมูลการล็อกอินที่เก็บไว้ (ปรับตามที่คุณใช้)
+    localStorage.removeItem("adminLoggedIn"); // หรือชื่อ key ที่คุณตั้งไว้
+    sessionStorage.clear(); // ล้าง session ทั้งหมด
+
+    // 3. ถ้าคุณใช้ Firebase Auth (ถ้ามี)
+    // firebase.auth().signOut();
+
+    // 4. ส่งกลับไปหน้า Login หรือหน้าแรก
+    window.location.href = "login.html";
+  }
+}
+
+// ==========================================
+// 1. การตั้งค่าคงที่และตัวแปร Global
+// ==========================================
+const IMGBB_API_KEY = "09b1806a38e859fb428ab5eac50ebda1";
+const ADMIN_SECRET = "2BKC_SECRET_2026";
+
+let selectedFiles = [];       // เก็บไฟล์รูปภาพใหม่ (File Objects)
+window.existingImages = [];    // เก็บ URL รูปภาพเดิมจาก Database (Strings)
+
+// ==========================================
+// 2. ฟังก์ชันตัวช่วย (Helpers & Navigation)
+// ==========================================
+
+// ระบบสลับหน้า Section ใน Dashboard
+function showSection(sectionId) {
+    // ซ่อนทุก Section
+    document.querySelectorAll(".admin-section").forEach((section) => {
+        section.style.display = "none";
+    });
+
+    // แสดงเฉพาะ Section ที่เลือก
+    const targetSection = document.getElementById(sectionId + "-section");
+    if (targetSection) targetSection.style.display = "block";
+
+    // ปรับสถานะปุ่มใน Sidebar
+    document.querySelectorAll(".sidebar nav a").forEach((link) => {
+        link.classList.remove("active");
+    });
+    const activeNav = document.getElementById("nav-" + sectionId);
+    if (activeNav) activeNav.classList.add("active");
+
+    // เปลี่ยนหัวข้อบน Top Bar
+    const titles = {
+        news: "จัดการข่าวสารและกิจกรรม",
+        members: "จัดการคณะกรรมการชมรม",
+        settings: "ตั้งค่าระบบแอดมิน",
+    };
+    const titleElement = document.getElementById("current-page-title");
+    if (titleElement) titleElement.innerText = titles[sectionId] || "Dashboard";
+
+    // ปิด Sidebar มือถืออัตโนมัติ
+    if (window.innerWidth <= 768 && typeof toggleSidebar === "function") {
+        toggleSidebar();
+    }
+}
+
+// อัปโหลดรูปภาพไปยัง ImgBB
+async function uploadToImgBB(file) {
+    if (!file) return null;
+    const formData = new FormData();
+    formData.append("image", file);
+    try {
+        const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+            method: "POST",
+            body: formData,
+        });
+        const data = await response.json();
+        return data.success ? data.data.url : null;
+    } catch (error) {
+        console.error("Upload Error:", error);
+        return null;
+    }
+}
+
+// ล้างฟอร์มข่าวสาร
+function resetNewsForm() {
+    document.getElementById("newsForm").reset();
+    document.getElementById("editNewsId").value = "";
+    selectedFiles = [];
+    window.existingImages = [];
+    renderEditPreviews(); 
+    
+    const submitBtn = document.getElementById("btnNewsSubmit");
+    submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> ประกาศข่าวสาร';
+    submitBtn.style.background = "";
+    document.getElementById("btnCancelNewsEdit").style.display = "none";
+    
+    const statusText = document.getElementById("uploadStatus");
+    if (statusText) statusText.innerText = "";
+}
+
+// ==========================================
+// 3. ระบบจัดการรูปภาพ (Preview & Selection)
+// ==========================================
+
+function renderEditPreviews() {
+    const container = document.getElementById("imagePreviewContainer");
+    const countText = document.getElementById("fileCountText");
+    if (!container) return;
+    container.innerHTML = "";
+
+    // 1. วาดรูปเก่า (สีน้ำเงิน - จาก Database)
+    window.existingImages.forEach((url, index) => {
+        const div = document.createElement("div");
+        div.className = "preview-item existing";
+        div.style = "position: relative; width: 90px; height: 90px; border-radius: 8px; overflow: hidden; border: 2px solid #3498db; display: inline-block; margin: 5px;";
+        div.innerHTML = `
+            <img src="${url}" style="width: 100%; height: 100%; object-fit: cover;">
+            <button type="button" onclick="removeExistingImage(${index})" style="position: absolute; top: 0; right: 0; background: #e74c3c; color: white; border: none; cursor: pointer; padding: 2px 6px;"><i class="fas fa-times"></i></button>
+            <span style="position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(52,152,219,0.8); color: white; font-size: 10px; text-align: center;">รูปเดิม</span>
+        `;
+        container.appendChild(div);
+    });
+
+    // 2. วาดรูปใหม่ (สีเขียว - จากเครื่องผู้ใช้)
+    selectedFiles.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const div = document.createElement("div");
+            div.className = "preview-item new";
+            div.style = "position: relative; width: 90px; height: 90px; border-radius: 8px; overflow: hidden; border: 2px solid #2ecc71; display: inline-block; margin: 5px;";
+            div.innerHTML = `
+                <img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover;">
+                <button type="button" onclick="removeFile(${index})" style="position: absolute; top: 0; right: 0; background: #e74c3c; color: white; border: none; cursor: pointer; padding: 2px 6px;"><i class="fas fa-times"></i></button>
+            `;
+            container.appendChild(div);
+        };
+        reader.readAsDataURL(file);
+    });
+
+    const total = window.existingImages.length + selectedFiles.length;
+    if (countText) countText.innerText = `รวมทั้งหมด ${total} รูป`;
+}
+
+function removeFile(index) {
+    selectedFiles.splice(index, 1);
+    renderEditPreviews();
+}
+
+function removeExistingImage(index) {
+    window.existingImages.splice(index, 1);
+    renderEditPreviews();
+}
+
+// ==========================================
+// 4. ฟังก์ชันหลัก News CRUD (Firebase)
+// ==========================================
+
+// โหลดข้อมูลข่าวลงตาราง
+function loadNewsTable() {
+    const tableBody = document.getElementById("newsTableBody");
+    if (!tableBody) return;
+
+    database.ref("news").on("value", (snapshot) => {
+        tableBody.innerHTML = "";
+        const newsData = snapshot.val();
+        if (!newsData) {
+            tableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#999;">ยังไม่มีข้อมูลข่าวสาร</td></tr>';
+            return;
+        }
+
+        const newsArray = Object.keys(newsData).map(key => ({ id: key, ...newsData[key] }))
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        newsArray.forEach((item) => {
+            const row = `
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 12px; white-space: nowrap;">${item.date}</td>
+                    <td style="padding: 12px;"><strong>${item.title}</strong></td>
+                    <td style="padding: 12px; text-align: center; white-space: nowrap;">
+                        <button onclick="editNews('${item.id}')" class="btn-edit" style="color:#f39c12; border:none; background:none; cursor:pointer; margin-right:15px; font-size:1.1rem;">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteNews('${item.id}', '${item.title}')" class="btn-delete" style="color:#ff4d4d; border:none; background:none; cursor:pointer; font-size:1.1rem;">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                </tr>`;
+            tableBody.insertAdjacentHTML("beforeend", row);
+        });
+    });
+}
+
+// เตรียมข้อมูลเพื่อแก้ไข
+async function editNews(id) {
+    const snapshot = await database.ref(`news/${id}`).once("value");
+    const news = snapshot.val();
+    if (!news) return;
+
+    document.getElementById("editNewsId").value = id;
+    document.getElementById("newsTitle").value = news.title;
+    document.getElementById("newsDate").value = news.date;
+    document.getElementById("newsContent").value = news.content;
+
+    // โหลดรูปเก่าเข้าระบบ Preview
+    window.existingImages = news.more_images || (news.image ? [news.image] : []);
+    selectedFiles = []; 
+    
+    renderEditPreviews();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    const submitBtn = document.getElementById("btnNewsSubmit");
+    submitBtn.innerHTML = '<i class="fas fa-save"></i> บันทึกการแก้ไข';
+    submitBtn.style.background = "#27ae60";
+    document.getElementById("btnCancelNewsEdit").style.display = "inline-block";
+}
+
+// ลบข่าว
+function deleteNews(id, title) {
+    if (confirm(`⚠️ คุณต้องการลบข่าว "${title}" ใช่หรือไม่?`)) {
+        database.ref(`news/${id}`).remove()
+            .then(() => alert("ลบข่าวสารเรียบร้อยแล้ว"))
+            .catch((err) => alert("❌ ไม่สามารถลบได้: " + err.message));
+    }
+}
+
+// ==========================================
+// 5. การจัดการ Event Listeners
+// ==========================================
+
+// จัดการ Submit ฟอร์ม (เพิ่ม/แก้ไข)
+document.getElementById("newsForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const submitBtn = document.getElementById("btnNewsSubmit");
+    const statusText = document.getElementById("uploadStatus");
+    const editId = document.getElementById("editNewsId").value;
+
+    // ตรวจสอบรูปภาพ
+    if (selectedFiles.length === 0 && window.existingImages.length === 0) {
+        alert("กรุณาเลือกรูปภาพอย่างน้อย 1 รูป");
+        return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังดำเนินการ...';
+
+    try {
+        let finalImages = [...window.existingImages]; // เอารูปเก่าที่เหลืออยู่เป็นตัวตั้ง
+
+        // อัปโหลดรูปใหม่ (ถ้ามี)
+        if (selectedFiles.length > 0) {
+            for (let i = 0; i < selectedFiles.length; i++) {
+                if (statusText) statusText.innerText = `⌛ กำลังอัปโหลดรูปใหม่ที่ ${i + 1}/${selectedFiles.length}...`;
+                const url = await uploadToImgBB(selectedFiles[i]);
+                if (url) finalImages.push(url);
+            }
+        }
+
+        const newsData = {
+            title: document.getElementById("newsTitle").value.trim(),
+            date: document.getElementById("newsDate").value,
+            content: document.getElementById("newsContent").value.trim(),
+            image: finalImages.length > 0 ? finalImages[0] : "img/default-news.jpg",
+            more_images: finalImages,
+            admin_key: ADMIN_SECRET,
+            updated_at: new Date().toISOString()
+        };
+
+        if (editId) {
+            await database.ref(`news/${editId}`).update(newsData);
+            alert("✅ แก้ไขข้อมูลข่าวสารเรียบร้อย!");
+        } else {
+            newsData.created_at = new Date().toISOString();
+            await database.ref("news").push(newsData);
+            alert("✅ ประกาศข่าวสารเรียบร้อย!");
+        }
+
+        resetNewsForm();
+    } catch (error) {
+        alert("❌ ผิดพลาด: " + error.message);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> ประกาศข่าวสาร';
+    }
+});
+
+// จัดการการเลือกรูปภาพเพิ่ม (Multiple Selection Accumulation)
+document.getElementById("newsMoreImagesFiles").addEventListener("change", function (e) {
+    const files = Array.from(e.target.files);
+    files.forEach((file) => {
+        const isDuplicate = selectedFiles.some(f => f.name === file.name && f.size === file.size);
+        if (!isDuplicate) selectedFiles.push(file);
+    });
+    renderEditPreviews();
+    this.value = ""; // Reset เพื่อให้เลือกไฟล์เดิมซ้ำได้ถ้าต้องการ
+});
+
+// เริ่มต้นทำงานเมื่อโหลดหน้าเว็บ
+document.addEventListener("DOMContentLoaded", () => {
+    loadNewsTable();
+});
