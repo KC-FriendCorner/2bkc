@@ -1,0 +1,17 @@
+{
+  "name": "2bkc-admin-api",
+  "version": "1.0.0",
+  "description": "Admin API for 2BKC using Vercel Serverless Functions",
+  "main": "api/send-notify.js",
+  "scripts": {
+    "start": "node api/send-notify.js",
+    "dev": "vercel dev"
+  },
+  "engines": {
+    "node": "20.x"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.6.0"
+  },
+  "private": true
+}

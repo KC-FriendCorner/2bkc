@@ -1,42 +1,33 @@
 const admin = require('firebase-admin');
 
-// ดึงค่าจาก Environment Variable ที่เราตั้งไว้ใน Vercel
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    databaseURL: "https://bkc-bc48f-default-rtdb.asia-southeast1.firebasedatabase.app"
-  });
-}
-
+// ฟังก์ชันสำหรับ Initialize ป้องกันการรันซ้ำ
 function initFirebase() {
     if (admin.apps.length === 0) {
-        const rawKey = process.env.FIREBASE_PRIVATE_KEY || '';
-        const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-
-        if (!rawKey || !clientEmail) {
-            throw new Error("Missing Firebase Configuration Environment Variables");
+        // กรณีใช้ก้อน JSON เดียวใน Vercel Environment Variables
+        if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+            const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+            admin.initializeApp({
+                credential: admin.credential.cert(serviceAccount),
+                databaseURL: "https://bkc-bc48f-default-rtdb.asia-southeast1.firebasedatabase.app"
+            });
+        } 
+        // กรณีแยกตัวแปร (Fallback)
+        else {
+            admin.initializeApp({
+                credential: admin.credential.cert({
+                    projectId: process.env.FIREBASE_PROJECT_ID,
+                    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+                    privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+                }),
+                databaseURL: "https://bkc-bc48f-default-rtdb.asia-southeast1.firebasedatabase.app"
+            });
         }
-
-        const formattedKey = rawKey
-            .replace(/\\n/g, '\n')
-            .replace(/^['"]|['"]$/g, '')
-            .trim();
-
-        admin.initializeApp({
-            credential: admin.credential.cert({
-                projectId: process.env.FIREBASE_PROJECT_ID || "kc-tobe-friendcorner-21655",
-                clientEmail: clientEmail,
-                privateKey: formattedKey,
-            }),
-        });
-        console.log("✅ Firebase Admin SDK Initialized Successfully");
     }
     return admin.messaging();
 }
 
 module.exports = async (req, res) => {
+    // CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -44,77 +35,52 @@ module.exports = async (req, res) => {
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
-    const { token, title, body, recipientUid, link } = req.body;
+    // รับ tokens (แบบ Array) หรือ token (แบบใบเดียว)
+    const { tokens, token, title, body, recipientUid, link } = req.body;
+    const targetTokens = tokens || (token ? [token] : []);
 
-    if (!token || !title || !body) {
-        return res.status(400).json({ error: 'Missing required fields' });
+    if (targetTokens.length === 0 || !title || !body) {
+        return res.status(400).json({ error: 'Missing tokens, title, or body' });
     }
 
     try {
         const messaging = initFirebase();
-        const defaultLink = link || 'https://2bkc.smtekc.com/admin.html';
-        // ✅ ใช้ KCปก1.png เป็นหลัก
-        const defaultIcon = 'https://2bkc.smtekc.com/img/2bkc.jpg'; 
+        const defaultLink = link || 'https://2bkc.smtekc.com/#news';
+        const defaultIcon = 'https://2bkc.smtekc.com/img/2bkc.jpg';
 
+        // สร้างโครงสร้างข้อความ (Multicast)
         const message = {
-            token: token,
-            notification: {
-                title: title,
-                body: body,
-                // 🚩 ลบรูปใหญ่ออกเรียบร้อย
-            },
+            notification: { title, body },
             android: {
                 priority: 'high',
-                ttl: 3600 * 1000,
                 notification: {
-                    icon: defaultIcon,
-                    sound: 'default',
+                    icon: 'stock_ticker_update', // หรือชื่อ icon ในโปรเจกต์
+                    color: '#E91E63',
                     clickAction: defaultLink,
-                    // ✅ สีชมพู Baojai
-                    color: '#E91E63', 
-                    notificationPriority: 'PRIORITY_MAX',
-                    vibrateTimings: ['0s', '0.2s', '0.1s', '0.2s'],
-                    channelId: 'user_messages',
-                    visibility: 'public'
-                }
-            },
-            apns: {
-                payload: {
-                    aps: {
-                        sound: 'default',
-                        badge: 1,
-                        'mutable-content': 1
-                    }
                 }
             },
             webpush: {
                 headers: { Urgency: 'high' },
                 notification: {
                     icon: defaultIcon,
-                    // ✅ แก้ชื่อไฟล์ให้ตรง (KCปก1.png)
-                    badge: 'https://2bkc-baojai-zone-admin.vercel.app/adminbadge.png', 
                     requireInteraction: true,
-                    tag: recipientUid || 'user_msg',
                 },
-                fcmOptions: {
-                    link: defaultLink
-                }
+                fcmOptions: { link: defaultLink }
             },
-            data: {
-                click_url: defaultLink,
-                recipientUid: recipientUid || 'unknown'
-            }
+            tokens: targetTokens, // ใส่เป็น Array
         };
 
-        const response = await messaging.send(message);
-        return res.status(200).json({ success: true, messageId: response });
+        // เปลี่ยนเป็นส่งแบบกลุ่ม
+        const response = await messaging.sendEachForMulticast(message);
+        
+        return res.status(200).json({ 
+            success: true, 
+            successCount: response.successCount, 
+            failureCount: response.failureCount 
+        });
 
     } catch (error) {
-        console.error('❌ FCM Error:', error.code, error.message);
-        const invalidTokens = ['messaging/registration-token-not-registered', 'messaging/invalid-registration-token'];
-        if (invalidTokens.includes(error.code)) {
-            return res.status(410).json({ success: false, error: 'Token no longer valid', code: error.code });
-        }
-        return res.status(500).json({ success: false, error: error.message, code: error.code || 'internal_error' });
+        console.error('❌ FCM Error:', error);
+        return res.status(500).json({ error: error.message });
     }
 };
