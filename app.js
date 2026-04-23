@@ -1,65 +1,103 @@
 /**
- * ฟังก์ชันเริ่มต้นระบบแจ้งเตือนอัตโนมัติ
+ * 2BKC Notification System
+ * Version: 1.0.0 (Production)
  */
-window.onload = () => {
-    // หน่วงเวลา 2 วินาทีหลังหน้าเว็บโหลดเสร็จ เพื่อป้องกัน Browser บล็อก Popup อัตโนมัติ
-    setTimeout(() => {
-        initNotification();
-    }, 2000);
-};
 
+// 1. ตั้งค่าสถานะเริ่มต้น
+const VAPID_PUBLIC_KEY = 'BGul7Ob55G5r8huiGNlqFVtkSAB72MCGD6jEuiSyRJiYYmYiq6PIEEq3jq62xIHKM1odTfDulIZwIviON0MpYmw';
+
+// 2. ลงทะเบียน Service Worker ทันทีที่โหลดไฟล์
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/firebase-messaging-sw.js')
+        .then((registration) => {
+            console.log('✅ Service Worker Registered. Scope:', registration.scope);
+        })
+        .catch((error) => {
+            console.error('❌ Service Worker Registration Failed:', error);
+        });
+}
+
+/**
+ * ฟังก์ชันหลักในการตั้งค่าการแจ้งเตือน
+ */
 async function initNotification() {
-    // 1. เช็คว่ารองรับไหม
+    // ตรวจสอบความพร้อมของ Browser
     if (!('Notification' in window) || !('serviceWorker' in navigator)) {
         console.warn('เบราว์เซอร์นี้ไม่รองรับการแจ้งเตือน');
         return;
     }
 
-    // 2. เช็คว่าเคยโดนปฏิเสธไปแล้วหรือยัง
+    // กรณีผู้ใช้เคยบล็อกไว้
     if (Notification.permission === 'denied') {
-        console.error('สิทธิ์แจ้งเตือนถูกบล็อกโดยผู้ใช้');
+        console.error('Notification permission was previously denied.');
         return;
     }
 
     try {
-        const messaging = firebase.messaging();
-
-        // 3. รอให้ Service Worker พร้อมทำงาน
+        // รอให้ Service Worker พร้อมใช้งานจริงๆ (ลดปัญหา AbortError)
         const registration = await navigator.serviceWorker.ready;
         
-        // 4. ขอสิทธิ์แจ้งเตือน (Popup จะเด้งที่นี่)
+        // ขอสิทธิ์การแจ้งเตือน (Browser จะเด้ง Popup ที่นี่)
         const permission = await Notification.requestPermission();
         
         if (permission === 'granted') {
-            console.log('ผู้ใช้อนุญาตการแจ้งเตือนแล้ว');
+            console.log('🔔 Notification permission granted.');
+            
+            const messaging = firebase.messaging();
 
-            // 5. ดึง Token 
-            // **สำคัญ: ต้องใส่ vapidKey ที่ก๊อปมาจาก Firebase Console**
+            // ดึง FCM Token
             const token = await messaging.getToken({
                 serviceWorkerRegistration: registration,
-                vapidKey: 'คัดลอกรหัส VAPID Key ของคุณมาใส่ที่นี่' 
+                vapidKey: VAPID_PUBLIC_KEY
             });
 
             if (token) {
+                console.log('🎫 Current Token:', token);
                 await saveTokenToDatabase(token);
+            } else {
+                console.warn('No registration token available. Request permission to generate one.');
             }
+        } else {
+            console.warn('Permission not granted for notifications.');
         }
-    } catch (err) {
-        console.error('เกิดข้อผิดพลาด:', err);
+
+    } catch (error) {
+        // จัดการ Error "NotAllowedError" ที่พบบ่อย
+        if (error.code === 'messaging/permission-blocked' || error.name === 'NotAllowedError') {
+            console.error('การลงทะเบียนล้มเหลว: ผู้ใช้ปิดกั้นสิทธิ์หรือเบราว์เซอร์ปฏิเสธ');
+        } else {
+            console.error('เกิดข้อผิดพลาดในการตั้งค่าแจ้งเตือน:', error);
+        }
     }
 }
 
-// ฟังก์ชันบันทึกลง Database
+/**
+ * บันทึก Token ลง Firebase Realtime Database
+ */
 async function saveTokenToDatabase(token) {
+    // เปลี่ยนจุดเป็นขีดล่างเพื่อให้เป็น Key ของ Database ได้
     const safeToken = token.replace(/\./g, '_');
+    const database = firebase.database();
+    
     try {
-        await firebase.database().ref(`fcm_tokens/${safeToken}`).set({
+        await database.ref(`fcm_tokens/${safeToken}`).set({
             token: token,
             updatedAt: firebase.database.ServerValue.TIMESTAMP,
-            platform: 'web'
+            platform: 'web',
+            userAgent: navigator.userAgent // เก็บข้อมูลเบราว์เซอร์เพื่อการวิเคราะห์
         });
-        console.log('ลงทะเบียน Token สำเร็จ!');
-    } catch (error) {
-        console.error('ไม่สามารถบันทึก Token ได้:', error);
+        console.log('🚀 Token saved to database successfully!');
+    } catch (dbError) {
+        console.error('❌ Error saving token to database:', dbError);
     }
 }
+
+/**
+ * รันระบบอัตโนมัติแบบหน่วงเวลา (ป้องกันการโดนเบราว์เซอร์บล็อก Popup)
+ */
+window.addEventListener('load', () => {
+    // หน่วงเวลา 3 วินาทีเพื่อให้หน้าเว็บโหลดทรัพยากรอื่นเสร็จก่อน
+    setTimeout(() => {
+        initNotification();
+    }, 3000);
+});
