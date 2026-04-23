@@ -145,10 +145,14 @@ body {
 }
 
 .hero-btns {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-  margin-top: 30px;
+    display: flex;            /* มั่นใจว่าเป็น Flexbox */
+    flex-direction: row;      /* เปลี่ยนจาก column เป็น row */
+    justify-content: center;  /* จัดปุ่มให้อยู่กึ่งกลางแนวนอน */
+    align-items: center;      /* จัดปุ่มให้อยู่กึ่งกลางแนวตั้ง (ถ้าปุ่มสูงไม่เท่ากัน) */
+    gap: 15px;                /* เพิ่มระยะห่างระหว่างปุ่ม (ดีกว่าใช้ margin) */
+    width: 100%;              /* ยืดคอนเทนเนอร์ให้เต็มพื้นที่ */
+    max-width: 500px;         /* ขยายความกว้างสูงสุดเพื่อให้วาง 2 ปุ่มได้พอดี */
+    margin: 0 auto;           /* จัดให้อยู่กลางจอ */
 }
 
 /* ปรับแต่งสำหรับมือถือ (จอเล็กกว่า 768px) */
@@ -2041,4 +2045,292 @@ body {
         visibility: visible;
         opacity: 1;
     }
+}
+
+
+
+/* คอนเทนเนอร์หลัก */
+.tbk-premium-header {
+    padding: 50px 10px;
+    text-align: center;
+    background: transparent;
+    width: 100%;
+    overflow: hidden;
+}
+
+/* จุดรวมพลังของหัวข้อ */
+.tbk-main-anchor {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 100%;
+}
+
+.tbk-mega-display {
+    /* ปรับขั้นต่ำเป็น 1.5rem เพื่อให้มือถือดูเด่น */
+    /* 5vw คือการขยายตามความกว้างจอ, 3.2rem คือขนาดสูงสุดในคอม */
+    font-size: clamp(2rem, 6vw, 3.2rem);
+    font-weight: 900;
+    margin: 0;
+    white-space: nowrap; /* ห้ามตกบรรทัดเด็ดขาด */
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    letter-spacing: -0.5px;
+}
+
+/* เอฟเฟกต์สีตัวอักษรแบบ Glossy Red */
+.tbk-text-gradient {
+    background: linear-gradient(to bottom, #ffffff 0%, #fb7185 20%, #e11d48 50%, #9f1239 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    /* สร้างมิติด้วยเงาหลายชั้น */
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1)) 
+            drop-shadow(0 4px 10px rgba(225, 29, 72, 0.4));
+}
+
+/* ไอคอนที่มีเอฟเฟกต์วิบวับ */
+.tbk-icon-shimmer {
+    filter: drop-shadow(0 0 8px rgba(0,0,0,0.1));
+    animation: tbk-float 3s ease-in-out infinite;
+}
+
+/* เส้นใต้แบบมีแสง Neon */
+.tbk-indicator-group {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+}
+
+.tbk-glow-bar {
+    width: 180px;
+    height: 5px;
+    background: linear-gradient(90deg, transparent, #e11d48, #fb7185, #e11d48, transparent);
+    border-radius: 50px;
+    box-shadow: 0 4px 15px rgba(225, 29, 72, 0.6);
+    position: relative;
+}
+
+/* เพิ่มจุดวิ่งผ่านเส้น (เหมือนกระแสไฟ) */
+.tbk-glow-bar::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+    animation: tbk-scan 3s infinite;
+}
+
+/* --- Animations --- */
+@keyframes tbk-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+@keyframes tbk-scan {
+    0% { left: -100%; }
+    100% { left: 200%; }
+}
+
+/* สำหรับมือถือที่หน้าจอแคบจริงๆ */
+@media (max-width: 400px) {
+    .tbk-mega-display {
+        gap: 6px;
+        /* บีบตัวอักษรเข้าหากันเล็กน้อยเพื่อให้ดูแน่นและไม่ล้น */
+        letter-spacing: -1.2px;
+    }
+    .tbk-glow-bar {
+        width: 120px;
+    }
+}
+
+
+
+
+
+
+
+/* ----------------------------------------------------------------
+   1. Root Variables & Reset
+   ---------------------------------------------------------------- */
+:root {
+    --primary-gold: linear-gradient(135deg, #ffd700 0%, #b8860b 100%);
+    --bg-dark-overlay: rgba(0, 0, 0, 0.85);
+    --card-bg: #1a1a1a;
+    --text-main: #ffffff;
+    --text-muted: #a0a0a0;
+    --transition-speed: 0.3s;
+}
+
+/* ----------------------------------------------------------------
+   2. Floating Action Button (FAB)
+   ---------------------------------------------------------------- */
+.install-fab-container {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    z-index: 1000;
+}
+
+.install-fab {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--primary-gold);
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 
+                0 0 20px rgba(184, 134, 11, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000;
+    transition: transform var(--transition-speed) cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.install-fab:hover {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.install-fab:active {
+    transform: scale(0.95);
+}
+
+/* ----------------------------------------------------------------
+   3. Loading Popup (Spinner)
+   ---------------------------------------------------------------- */
+.loading-popup {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-dark-overlay);
+    display: none; /* Toggle via JS */
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+    z-index: 2000;
+    text-align: center;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(255, 215, 0, 0.1);
+    border-top: 3px solid #ffd700;
+    border-radius: 50%;
+    margin: 0 auto 15px;
+    animation: spin 1s linear infinite;
+}
+
+.popup-text {
+    color: var(--text-main);
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-bottom: 5px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ----------------------------------------------------------------
+   4. Custom Install Modal
+   ---------------------------------------------------------------- */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-dark-overlay);
+    display: none; /* Toggle via JS */
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 3000;
+    backdrop-filter: blur(5px);
+    animation: fadeIn 0.3s ease-out;
+}
+
+.modal-card {
+    background: var(--card-bg);
+    width: 100%;
+    max-width: 400px;
+    border-radius: 24px;
+    padding: 32px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    transform: translateY(20px);
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.modal-header .modal-icon-gold {
+    margin-bottom: 20px;
+    display: inline-block;
+    filter: drop-shadow(0 0 8px rgba(184, 134, 11, 0.5));
+}
+
+.modal-body h3 {
+    color: #ffd700;
+    font-size: 1.5rem;
+    margin-bottom: 12px;
+    font-weight: 700;
+}
+
+.modal-body p {
+    color: var(--text-muted);
+    line-height: 1.6;
+    font-size: 0.95rem;
+    margin-bottom: 30px;
+}
+
+/* Buttons */
+.modal-footer {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-modal-primary, .btn-modal-secondary {
+    flex: 1;
+    padding: 14px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.btn-modal-primary {
+    background: var(--primary-gold);
+    color: #000;
+}
+
+.btn-modal-primary:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+}
+
+.btn-modal-secondary {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+}
+
+.btn-modal-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    to { transform: translateY(0); }
+}
+
+/* ----------------------------------------------------------------
+   5. Utility Classes (For JS)
+   ---------------------------------------------------------------- */
+.show-flex {
+    display: flex !important;
 }

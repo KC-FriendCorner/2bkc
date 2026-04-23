@@ -332,3 +332,143 @@ window.addEventListener("click", (e) => {
     closeNewsModal();
   }
 });
+
+
+
+
+// ==========================================
+// ระบบติดตั้งแอป 2BKC (Ultimate Hybrid Version - Fixed iPadOS)
+// ==========================================
+
+(function () {
+    // 1. ประกาศตัวแปรหลัก
+    let deferredPrompt = null;
+    const installContainer = document.querySelector('.install-fab-container');
+    const btnInstall = document.getElementById('btnInstall');
+
+    // Elements ของ Custom Modal
+    const customModal = document.getElementById('custom-install-modal');
+    const modalConfirm = document.getElementById('modal-confirm');
+    const modalCancel = document.getElementById('modal-cancel');
+    const modalTitle = customModal?.querySelector('.modal-body h3');
+    const modalBody = customModal?.querySelector('.modal-body p');
+
+    // 2. ฟังก์ชันตรวจสอบอุปกรณ์ (รองรับ iPhone และ iPadOS รุ่นใหม่)
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    const isStandalone = () => {
+        return window.matchMedia('(display-mode: standalone)').matches ||
+            window.navigator.standalone === true;
+    };
+
+    const closeModal = () => {
+        if (customModal) {
+            customModal.classList.remove('active');
+            setTimeout(() => { customModal.style.display = 'none'; }, 300);
+        }
+    };
+
+    // --- เริ่มต้นการทำงาน (Hybrid Logic) ---
+
+    const initInstallUI = () => {
+        // ถ้าติดตั้งแอปแล้ว ไม่ต้องทำอะไรต่อ
+        if (isStandalone()) {
+            if (installContainer) installContainer.style.display = 'none';
+            return;
+        }
+
+        // กรณี iOS/iPadOS: บังคับโชว์ปุ่มทันที เพราะระบบไม่มี Event อัตโนมัติ
+        if (isIOS) {
+            if (installContainer) {
+                // ใช้ setProperty เพื่อให้มั่นใจว่า CSS display จะถูกทับแน่นอน
+                installContainer.style.setProperty('display', 'flex', 'important');
+            }
+            console.log('🍎 iOS/iPadOS Mode: Show button immediately');
+        }
+    };
+
+    // รันเช็คเบื้องต้นทันที
+    initInstallUI();
+
+    // 3. สำหรับ Android/Chrome: ดักจับ Event (มักจะมาช้าตามรอบเบราว์เซอร์)
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+
+        // ถ้าไม่ใช่ iOS และยังไม่ได้ติดตั้ง ให้แสดงปุ่มเมื่อ Event มาถึง
+        if (!isIOS && installContainer && !isStandalone()) {
+            installContainer.style.setProperty('display', 'flex', 'important');
+            console.log('🤖 Android Mode: Prompt Ready');
+        }
+    });
+
+    // 4. เมื่อคลิกปุ่มติดตั้งหลัก
+    if (btnInstall) {
+        btnInstall.addEventListener('click', () => {
+            if (isIOS) {
+                // เนื้อหาพิเศษสำหรับ iOS/iPadOS
+                if (modalTitle) modalTitle.innerText = "ติดตั้ง 2BKC บน ios";
+                if (modalBody) modalBody.innerHTML = "1. กดปุ่ม <b>'แชร์' (Share)</b> ด้านบนขวาของเบราว์เซอร์<br>2. เลือกเมนู <b>'เพิ่มลงในหน้าจอโฮม'</b><br>(Add to Home Screen)";
+
+                // ซ่อนปุ่ม "ติดตั้งเลย" เพราะ iOS บังคับให้กดผ่านเมนู Safari เท่านั้น
+                if (modalConfirm) modalConfirm.style.display = 'none';
+
+                customModal.style.display = 'flex';
+                requestAnimationFrame(() => customModal.classList.add('active'));
+            }
+            else if (deferredPrompt) {
+                // เนื้อหาปกติสำหรับ Android
+                if (modalTitle) modalTitle.innerText = "ติดตั้ง 2BKC";
+                if (modalBody) modalBody.innerText = "เพิ่ม 2BKC ไว้บนหน้าจอหลัก เพื่อสามารถเข้าใช้งานได้อย่างรวดเร็วจ้าาา!";
+                if (modalConfirm) {
+                    modalConfirm.style.display = 'block';
+                    modalConfirm.innerText = "ติดตั้งเลย";
+                }
+
+                customModal.style.display = 'flex';
+                requestAnimationFrame(() => customModal.classList.add('active'));
+            } else {
+                alert('ขออภัย! ระบบยังไม่พร้อมติดตั้งในขณะนี้ หรือคุณได้ติดตั้งแอปไปแล้วครับ');
+            }
+        });
+    }
+
+    // 5. กดยืนยันติดตั้ง (เฉพาะ Android/PC)
+    if (modalConfirm) {
+        modalConfirm.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                closeModal();
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    if (installContainer) installContainer.style.display = 'none';
+                }
+                deferredPrompt = null;
+            }
+        });
+    }
+
+    if (modalCancel) modalCancel.addEventListener('click', closeModal);
+
+    // ปิดเมื่อคลิกนอก Modal
+    customModal?.addEventListener('click', (e) => {
+        if (e.target === customModal) closeModal();
+    });
+
+    // 6. ซ่อนปุ่มเมื่อติดตั้งสำเร็จ
+    window.addEventListener('appinstalled', () => {
+        if (installContainer) installContainer.style.display = 'none';
+        closeModal();
+        console.log('🚀 Installed successfully');
+    });
+
+})();
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('Service Worker Registered!', reg))
+            .catch(err => console.log('Service Worker Registration Failed:', err));
+    });
+}

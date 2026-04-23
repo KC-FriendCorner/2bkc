@@ -130,8 +130,18 @@
 
             <section id="news" class="page-content">
                 <div id="newsListView">
-                    <h2 class="section-header">📰 ข้อมูลข่าวสารและกิจกรรม</h2>
-                    <div id="newsContainer" class="news-grid">
+                    <div class="tbk-premium-header">
+                        <div class="tbk-main-anchor">
+                            <h2 class="tbk-mega-display">
+                                <span class="tbk-icon-shimmer">📰</span>
+                                <span
+                                    class="tbk-text-gradient">ข้อมูลข่าวสารและกิจกรรม</span>
+                            </h2>
+                        </div>
+                        <div class="tbk-indicator-group">
+                            <div class="tbk-glow-bar"></div>
+                        </div>
+                    </div> <div id="newsContainer" class="news-grid">
                         <div
                             class="news-loading-status">กำลังโหลดข่าวสาร...</div>
                     </div>
@@ -165,8 +175,18 @@
 
             <section id="members" class="page-content">
                 <div class="members-container">
-                    <h2 class="section-header">👥 คณะกรรมการดำเนินงาน</h2>
-
+                    <div class="tbk-premium-header">
+                        <div class="tbk-main-anchor">
+                            <h2 class="tbk-mega-display">
+                                <span class="tbk-icon-shimmer">👥</span>
+                                <span
+                                    class="tbk-text-gradient">คณะกรรมการดำเนินงาน</span>
+                            </h2>
+                        </div>
+                        <div class="tbk-indicator-group">
+                            <div class="tbk-glow-bar"></div>
+                        </div>
+                    </div>
                     <div class="year-filter" id="yearFilterContainer">
                         <button class="filter-btn active"
                             onclick="changeYear('2568')">ปีการศึกษา
@@ -265,6 +285,69 @@
                 </div>
             </section>
 
+            <div class="special-footer">
+
+                <div id="install-container" class="install-fab-container">
+                    <button id="btnInstall" class="install-fab">
+                        <div class="fab-icon">
+                            <svg viewBox="0 0 24 24" width="24" height="24"
+                                fill="none" stroke="currentColor"
+                                stroke-width="2.5"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path
+                                    d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                        </div>
+                    </button>
+                </div>
+            </div>
+            <div id="loading-popup" class="loading-popup">
+                <div class="popup-content">
+                    <div class="loading-spinner"></div>
+                    <p class="popup-text">กรุณารอซักครู่...</p>
+                    <p id="target-app-name"
+                        style="color: #fff; font-size: 0.8rem; margin-top: 5px; opacity: 0.7; font-weight: 300;"></p>
+                </div>
+            </div>
+            <div id="custom-install-modal" class="modal-overlay">
+                <div class="modal-card">
+                    <div class="modal-header">
+                        <div class="modal-icon-gold">
+                            <svg viewBox="0 0 24 24" width="50" height="50"
+                                fill="none" stroke="url(#goldGradient)"
+                                stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <defs>
+                                    <lineargradient id="goldGradient" x1="0%"
+                                        y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%"
+                                            style="stop-color:#ffd700;stop-opacity:1" />
+                                        <stop offset="100%"
+                                            style="stop-color:#b8860b;stop-opacity:1" />
+                                    </lineargradient>
+                                </defs>
+                                <path
+                                    d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="modal-body">
+                        <h3>ติดตั้ง 2BKC</h3>
+                        <p>เพิ่มแอปไว้บนหน้าจอหลักเพื่อการใช้งานที่รวดเร็ว <br>
+                            และดูสวยงามเหมือนแอปจริงในเครื่องคุณ</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="modal-cancel"
+                            class="btn-modal-secondary">ไว้ทีหลัง</button>
+                        <button id="modal-confirm"
+                            class="btn-modal-primary">ติดตั้งเลย</button>
+                    </div>
+                </div>
+            </div>
         </main>
         <script
             src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
