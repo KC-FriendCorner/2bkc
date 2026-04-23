@@ -3,61 +3,88 @@ const admin = require("firebase-admin");
 admin.initializeApp();
 
 exports.sendNewsNotification = functions
-  .region("asia-southeast1")
+  .region("asia-southeast1") // สิงคโปร์ Latency ต่ำที่สุดสำหรับไทย
   .database.ref("/news/{newsId}")
   .onCreate(async (snapshot, context) => {
     const newsData = snapshot.val();
     if (!newsData) return null;
 
-    // 1. ไปดึง Tokens ทั้งหมดที่เก็บไว้ใน /fcm_tokens
-    const tokensSnapshot = await admin
-      .database()
-      .ref("fcm_tokens")
-      .once("value");
-    const tokensData = tokensSnapshot.val();
-
-    if (!tokensData) return console.log("ไม่มีผู้ติดตาม");
-
-    // 2. รวบรวม Token ทั้งหมดใส่ Array
-    const registrationTokens = Object.values(tokensData).map(
-      (item) => item.token,
-    );
-
-    // 3. สร้างข้อความแจ้งเตือน
-    const message = {
-      notification: {
-        title: "📢 ข่าวสารใหม่จาก 2BKC!",
-        body: newsData.title || "อัปเดตข่าวใหม่ล่าสุด กดอ่านได้เลย",
-      },
-      data: {
-        link: "/#news", // สำหรับระบบ Hash
-      },
-      tokens: registrationTokens, // ส่งหาหลายคนพร้อมกัน
-    };
-
-    // 4. สั่งส่งแจ้งเตือนแบบ Multicast
     try {
-      const response = await admin.messaging().sendEachForMulticast(message);
-      console.log("ส่งแจ้งเตือนสำเร็จ:", response.successCount, "คน");
+      // 1. ดึง Tokens และใช้ Set เพื่อกรองตัวซ้ำทันที (ลด Load ของ FCM)
+      const tokensSnapshot = await admin.database().ref("fcm_tokens").once("value");
+      const tokensData = tokensSnapshot.val();
 
-      // (Optional) ลบ Token ที่ใช้งานไม่ได้แล้วออกเพื่อไม่ให้เปลืองแรงส่งครั้งหน้า
+      if (!tokensData) {
+        console.log("No followers to notify.");
+        return null;
+      }
+
+      // ดึงเฉพาะ Token ที่ไม่ซ้ำกัน
+      const registrationTokens = [...new Set(Object.values(tokensData).map(item => item.token))];
+      
+      // 2. ตั้งค่า Payload ให้สมบูรณ์แบบ (รองรับทั้ง Web, Android, iOS PWA)
+      const message = {
+        notification: {
+          title: "📢 ข่าวใหม่จาก 2BKC!",
+          body: newsData.title || "อัปเดตข่าวใหม่ล่าสุด กดอ่านได้เลย",
+        },
+        data: {
+          // ใส่ข้อมูลสำรองเผื่อ Service Worker ดึงจาก Data field
+          title: "📢 ข่าวใหม่จาก 2BKC!",
+          body: newsData.title || "อัปเดตข่าวใหม่ล่าสุด กดอ่านได้เลย",
+          link: "https://2bkc.smtekc.com/#news", // แนะนำให้ใช้ Full URL เพื่อความชัวร์ใน PWA
+          newsId: context.params.newsId
+        },
+        webpush: {
+          headers: {
+            Urgency: "high"
+          },
+          notification: {
+            icon: "https://2bkc.smtekc.com/img/2bkc.jpg",
+            badge: "https://2bkc.smtekc.com/img/icon-192.png",
+            requireInteraction: true, // แจ้งเตือนไม่หายไปจนกว่าจะกดปิด
+          },
+          fcmOptions: {
+            link: "https://2bkc.smtekc.com/#news"
+          }
+        },
+        tokens: registrationTokens,
+      };
+
+      // 3. ส่งแจ้งเตือนแบบ Multicast (รองรับสูงสุด 500 tokens ต่อรอบ)
+      // หากในอนาคตสมาชิกเกิน 500 คน ควรใช้การแบ่ง Array (Chunking)
+      const response = await admin.messaging().sendEachForMulticast(message);
+      console.log(`Successfully sent to ${response.successCount} devices.`);
+
+      // 4. ระบบจัดการ Token เสีย (Optimization)
       if (response.failureCount > 0) {
         const failedTokens = [];
         response.responses.forEach((resp, idx) => {
           if (!resp.success) {
-            failedTokens.push(registrationTokens[idx]);
+            // เช็คสาเหตุเฉพาะที่ควรลบ (เช่น Token หมดอายุ หรือ ไม่ใช่ผู้รับที่ถูกต้อง)
+            const error = resp.error.code;
+            if (error === 'messaging/invalid-registration-token' || 
+                error === 'messaging/registration-token-not-registered') {
+              failedTokens.push(registrationTokens[idx]);
+            }
           }
         });
 
-        // ลบ Token ที่ส่งไม่ผ่านออกจาก Database
-        const promises = failedTokens.map((t) => {
-          const safeT = t.replace(/\./g, "_");
-          return admin.database().ref(`fcm_tokens/${safeT}`).remove();
-        });
-        await Promise.all(promises);
-        console.log(`ลบ Token ที่หมดอายุแล้ว ${failedTokens.length} รายการ`);
+        if (failedTokens.length > 0) {
+          const updates = {};
+          // วนลูปหา key ใน database ที่ตรงกับ token ที่เสียเพื่อลบทิ้ง
+          // วิธีนี้เร็วกว่าการสั่ง .remove() ทีละตัว
+          Object.keys(tokensData).forEach(key => {
+            if (failedTokens.includes(tokensData[key].token)) {
+              updates[`fcm_tokens/${key}`] = null;
+            }
+          });
+          await admin.database().ref().update(updates);
+          console.log(`Cleaned up ${failedTokens.length} expired tokens.`);
+        }
       }
     } catch (error) {
-      console.error("เกิดข้อผิดพลาดในการส่ง:", error);
+      console.error("FCM Delivery Error:", error);
     }
+    return null;
   });

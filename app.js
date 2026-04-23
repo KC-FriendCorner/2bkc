@@ -1,118 +1,116 @@
 /**
- * 2BKC Notification System
- * Version: 1.0.0 (Production)
+ * 2BKC Notification System - Enhanced Production Version
  */
 
-// 1. ตั้งค่าสถานะเริ่มต้น
-const VAPID_PUBLIC_KEY =
-  "BGul7Ob55G5r8huiGNlqFVtkSAB72MCGD6jEuiSyRJiYYmYiq6PIEEq3jq62xIHKM1odTfDulIZwIviON0MpYmw";
+const VAPID_PUBLIC_KEY = "BGul7Ob55G5r8huiGNlqFVtkSAB72MCGD6jEuiSyRJiYYmYiq6PIEEq3jq62xIHKM1odTfDulIZwIviON0MpYmw";
 
-// 2. ลงทะเบียน Service Worker ทันทีที่โหลดไฟล์
+/**
+ * 1. ฟังก์ชันช่วยตรวจสอบสถานะออนไลน์ (กัน Error เวลาเน็ตหลุด)
+ */
+const isOnline = () => navigator.onLine;
+
+/**
+ * 2. ลงทะเบียน Service Worker
+ */
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker
-    .register("/firebase-messaging-sw.js")
-    .then((registration) => {
-      console.log("✅ Service Worker Registered. Scope:", registration.scope);
-    })
-    .catch((error) => {
-      console.error("❌ Service Worker Registration Failed:", error);
-    });
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/firebase-messaging-sw.js")
+      .then((registration) => {
+        console.log("✅ SW Registered:", registration.scope);
+      })
+      .catch((error) => {
+        console.error("❌ SW Registration Failed:", error);
+      });
+  });
 }
 
 /**
- * ฟังก์ชันหลักในการตั้งค่าการแจ้งเตือน
+ * 3. ฟังก์ชันหลักในการตั้งค่าการแจ้งเตือน
  */
 async function initNotification() {
-  // ตรวจสอบความพร้อมของ Browser
+  if (!isOnline()) return; // ถ้าออฟไลน์อยู่ ไม่ต้องรัน
+
   if (!("Notification" in window) || !("serviceWorker" in navigator)) {
-    console.warn("เบราว์เซอร์นี้ไม่รองรับการแจ้งเตือน");
+    console.warn("Browser not supported for notifications.");
     return;
   }
 
-  // กรณีผู้ใช้เคยบล็อกไว้
-  if (Notification.permission === "denied") {
-    console.error("Notification permission was previously denied.");
-    return;
-  }
+  // ถ้า Permission ถูกปิดไว้ ไม่ต้องรบกวนผู้ใช้
+  if (Notification.permission === "denied") return;
 
   try {
-    // รอให้ Service Worker พร้อมใช้งานจริงๆ (ลดปัญหา AbortError)
     const registration = await navigator.serviceWorker.ready;
-
-    // ขอสิทธิ์การแจ้งเตือน (Browser จะเด้ง Popup ที่นี่)
     const permission = await Notification.requestPermission();
 
     if (permission === "granted") {
-      console.log("🔔 Notification permission granted.");
-
       const messaging = firebase.messaging();
 
-      // ดึง FCM Token
+      // การต่ออายุ Token อัตโนมัติ (Heartbeat)
+      messaging.onTokenRefresh(async () => {
+        try {
+          const refreshedToken = await messaging.getToken({
+            serviceWorkerRegistration: registration,
+            vapidKey: VAPID_PUBLIC_KEY,
+          });
+          if (refreshedToken) await saveTokenToDatabase(refreshedToken);
+        } catch (err) {
+          console.error("Token refresh failed:", err);
+        }
+      });
+
+      // ดึง Token ปัจจุบัน
       const token = await messaging.getToken({
         serviceWorkerRegistration: registration,
         vapidKey: VAPID_PUBLIC_KEY,
       });
 
       if (token) {
-        console.log("🎫 Current Token:", token);
-        await saveTokenToDatabase(token);
-      } else {
-        console.warn(
-          "No registration token available. Request permission to generate one.",
-        );
+        // เช็คก่อนว่าต้องอัปเดตไหม เพื่อลดการเขียน Database พร่ำเพรื่อ
+        const lastToken = localStorage.getItem("fcm_token_last");
+        const lastSync = localStorage.getItem("fcm_token_sync_time");
+        const now = Date.now();
+
+        // บันทึกใหม่ถ้า Token เปลี่ยน หรือไม่ได้อัปเดตมาเกิน 24 ชม.
+        if (token !== lastToken || !lastSync || now - lastSync > 86400000) {
+          await saveTokenToDatabase(token);
+          localStorage.setItem("fcm_token_last", token);
+          localStorage.setItem("fcm_token_sync_time", now.toString());
+        }
       }
-    } else {
-      console.warn("Permission not granted for notifications.");
     }
   } catch (error) {
-    // 1. พ่น Error ตัวเต็มออกมาดูว่า Google ฟ้องว่าอะไร
-    console.error("❌ FCM Debug Error:", error);
-
-    // 2. ตรวจสอบสาเหตุเฉพาะหน้า
-    if (
-      error.code === "messaging/permission-blocked" ||
-      error.name === "NotAllowedError"
-    ) {
-      console.error(
-        "การลงทะเบียนล้มเหลว: ผู้ใช้ปิดกั้นสิทธิ์หรือเบราว์เซอร์ปฏิเสธ",
-      );
-    } else if (error.code === "messaging/failed-service-worker-registration") {
-      console.error(
-        "การจดทะเบียน Service Worker ล้มเหลว (เช็คตำแหน่งไฟล์ .js)",
-      );
-    } else {
-      console.error("เกิดข้อผิดพลาดอื่นๆ:", error.message);
-    }
+    console.error("❌ Notification Initialization Error:", error);
   }
 }
 
 /**
- * บันทึก Token ลง Firebase Realtime Database
+ * 4. บันทึก Token ลง Database (ปรับปรุงโครงสร้าง)
  */
 async function saveTokenToDatabase(token) {
-  // เปลี่ยนจุดเป็นขีดล่างเพื่อให้เป็น Key ของ Database ได้
-  const safeToken = token.replace(/\./g, "_");
+  if (!isOnline()) return;
+
+  // ใช้การ Hash หรือ Key ที่ปลอดภัยขึ้น (ใน Firebase Key ห้ามมี . # $ [ ])
+  const safeTokenKey = btoa(token).substring(0, 50).replace(/\//g, "_");
   const database = firebase.database();
 
   try {
-    await database.ref(`fcm_tokens/${safeToken}`).set({
+    await database.ref(`fcm_tokens/${safeTokenKey}`).set({
       token: token,
-      updatedAt: firebase.database.ServerValue.TIMESTAMP,
-      platform: "web",
-      userAgent: navigator.userAgent, // เก็บข้อมูลเบราว์เซอร์เพื่อการวิเคราะห์
+      lastActive: firebase.database.ServerValue.TIMESTAMP,
+      platform: "web_pwa",
+      isStandalone: window.matchMedia('(display-mode: standalone)').matches, // เช็คว่าเป็น PWA ไหม
     });
-    console.log("🚀 Token saved to database successfully!");
+    console.log("🚀 Token Synced Successfully!");
   } catch (dbError) {
-    console.error("❌ Error saving token to database:", dbError);
+    console.error("❌ Database Sync Failed:", dbError);
   }
 }
 
 /**
- * รันระบบอัตโนมัติแบบหน่วงเวลา (ป้องกันการโดนเบราว์เซอร์บล็อก Popup)
+ * 5. สั่งงานเมื่อพร้อม
  */
 window.addEventListener("load", () => {
-  // หน่วงเวลา 3 วินาทีเพื่อให้หน้าเว็บโหลดทรัพยากรอื่นเสร็จก่อน
-  setTimeout(() => {
-    initNotification();
-  }, 3000);
+  // ใช้ช่วงเวลาที่ User มีปฏิสัมพันธ์กับหน้าเว็บ จะช่วยให้ Permission ขอผ่านง่ายขึ้น
+  setTimeout(initNotification, 4000);
 });
