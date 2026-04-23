@@ -1,16 +1,14 @@
 /**
- * 2BKC Notification System - Enhanced Production Version
+ * 2BKC Notification System - Self-Healing Production Version
  */
 
-const VAPID_PUBLIC_KEY = "BGul7Ob55G5r8huiGNlqFVtkSAB72MCGD6jEuiSyRJiYYmYiq6PIEEq3jq62xIHKM1odTfDulIZwIviON0MpYmw";
+// ดึงค่าจาก Environment Variable ที่ตั้งไว้ใน Vercel
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_KEY;
 
-/**
- * 1. ฟังก์ชันช่วยตรวจสอบสถานะออนไลน์ (กัน Error เวลาเน็ตหลุด)
- */
 const isOnline = () => navigator.onLine;
 
 /**
- * 2. ลงทะเบียน Service Worker
+ * 1. ลงทะเบียน Service Worker
  */
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
@@ -26,72 +24,55 @@ if ("serviceWorker" in navigator) {
 }
 
 /**
- * 3. ฟังก์ชันหลักในการตั้งค่าการแจ้งเตือน
+ * 2. ฟังก์ชันตรวจสอบและซ่อมแซม Token (The Repair Core)
  */
-async function initNotification() {
-  if (!isOnline()) return; // ถ้าออฟไลน์อยู่ ไม่ต้องรัน
+async function forceSyncToken() {
+  if (!isOnline()) return;
 
-  if (!("Notification" in window) || !("serviceWorker" in navigator)) {
-    console.warn("Browser not supported for notifications.");
+  // ตรวจสอบว่า Browser รองรับและยอมรับ Permission หรือยัง
+  if (!("Notification" in window) || Notification.permission !== "granted") {
     return;
   }
 
-  // ถ้า Permission ถูกปิดไว้ ไม่ต้องรบกวนผู้ใช้
-  if (Notification.permission === "denied") return;
-
   try {
     const registration = await navigator.serviceWorker.ready;
-    const permission = await Notification.requestPermission();
+    const messaging = firebase.messaging();
 
-    if (permission === "granted") {
-      const messaging = firebase.messaging();
+    // ดึง Token ปัจจุบัน
+    const token = await messaging.getToken({
+      serviceWorkerRegistration: registration,
+      vapidKey: VAPID_PUBLIC_KEY,
+    });
 
-      // การต่ออายุ Token อัตโนมัติ (Heartbeat)
-      messaging.onTokenRefresh(async () => {
-        try {
-          const refreshedToken = await messaging.getToken({
-            serviceWorkerRegistration: registration,
-            vapidKey: VAPID_PUBLIC_KEY,
-          });
-          if (refreshedToken) await saveTokenToDatabase(refreshedToken);
-        } catch (err) {
-          console.error("Token refresh failed:", err);
-        }
-      });
+    if (token) {
+      const lastToken = localStorage.getItem("fcm_token_last");
+      const lastSync = localStorage.getItem("fcm_token_sync_time");
+      const now = Date.now();
 
-      // ดึง Token ปัจจุบัน
-      const token = await messaging.getToken({
-        serviceWorkerRegistration: registration,
-        vapidKey: VAPID_PUBLIC_KEY,
-      });
-
-      if (token) {
-        // เช็คก่อนว่าต้องอัปเดตไหม เพื่อลดการเขียน Database พร่ำเพรื่อ
-        const lastToken = localStorage.getItem("fcm_token_last");
-        const lastSync = localStorage.getItem("fcm_token_sync_time");
-        const now = Date.now();
-
-        // บันทึกใหม่ถ้า Token เปลี่ยน หรือไม่ได้อัปเดตมาเกิน 24 ชม.
-        if (token !== lastToken || !lastSync || now - lastSync > 86400000) {
-          await saveTokenToDatabase(token);
-          localStorage.setItem("fcm_token_last", token);
-          localStorage.setItem("fcm_token_sync_time", now.toString());
-        }
+      // เงื่อนไขการ Sync: 
+      // 1. Token เปลี่ยน 
+      // 2. ข้อมูลใน Database หาย (ไม่มี lastSync)
+      // 3. ไม่ได้อัปเดตมาเกิน 12 ชม. (ปรับให้เร็วขึ้นเพื่อความชัวร์)
+      if (token !== lastToken || !lastSync || now - parseInt(lastSync) > 43200000) {
+        console.log("♻️ Syncing/Repairing Token...");
+        await saveTokenToDatabase(token);
+        localStorage.setItem("fcm_token_last", token);
+        localStorage.setItem("fcm_token_sync_time", now.toString());
       }
     }
   } catch (error) {
-    console.error("❌ Notification Initialization Error:", error);
+    console.error("❌ Token Sync/Repair Failed:", error);
   }
 }
 
 /**
- * 4. บันทึก Token ลง Database (ปรับปรุงโครงสร้าง)
+ * 3. บันทึก Token ลง Database
  */
 async function saveTokenToDatabase(token) {
   if (!isOnline()) return;
 
-  // ใช้การ Hash หรือ Key ที่ปลอดภัยขึ้น (ใน Firebase Key ห้ามมี . # $ [ ])
-  const safeTokenKey = btoa(token).substring(0, 50).replace(/\//g, "_");
+  // สร้าง Key ที่ปลอดภัย
+  const safeTokenKey = btoa(token).substring(0, 50).replace(/[+/=]/g, "_");
   const database = firebase.database();
 
   try {
@@ -99,18 +80,46 @@ async function saveTokenToDatabase(token) {
       token: token,
       lastActive: firebase.database.ServerValue.TIMESTAMP,
       platform: "web_pwa",
-      isStandalone: window.matchMedia('(display-mode: standalone)').matches, // เช็คว่าเป็น PWA ไหม
+      isStandalone: window.matchMedia('(display-mode: standalone)').matches,
+      userAgent: navigator.userAgent // เก็บไว้เช็คกรณี Token มีปัญหา
     });
-    console.log("🚀 Token Synced Successfully!");
+    console.log("🚀 Token Synced & Repaired!");
   } catch (dbError) {
-    console.error("❌ Database Sync Failed:", dbError);
+    console.error("❌ DB Sync Failed:", dbError);
   }
 }
 
 /**
- * 5. สั่งงานเมื่อพร้อม
+ * 4. ระบบ Event Listeners เพื่อการตรวจสอบตลอดเวลา
  */
+
+// ก. เช็คเมื่อโหลดหน้าเว็บ (รอ 4 วิให้ระบบนิ่ง)
 window.addEventListener("load", () => {
-  // ใช้ช่วงเวลาที่ User มีปฏิสัมพันธ์กับหน้าเว็บ จะช่วยให้ Permission ขอผ่านง่ายขึ้น
-  setTimeout(initNotification, 4000);
+  setTimeout(forceSyncToken, 4000);
 });
+
+// ข. เช็คเมื่อผู้ใช้สลับหน้าจอ กลับมาที่แอป (สำคัญมากสำหรับ PWA)
+// ถ้าเขาปิดแอปไปแล้วเปิดใหม่ หรือสลับไปเล่น LINE แล้วกลับมา ระบบจะเช็คทันที
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    forceSyncToken();
+  }
+});
+
+// ค. เช็คเมื่ออินเทอร์เน็ตกลับมาใช้งานได้
+window.addEventListener("online", forceSyncToken);
+
+// ง. กรณี Firebase สั่ง Refresh Token เอง
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.ready.then((registration) => {
+        const messaging = firebase.messaging();
+        messaging.onTokenRefresh(async () => {
+            console.log("🔄 Token Refreshed by Firebase");
+            const refreshedToken = await messaging.getToken({
+                serviceWorkerRegistration: registration,
+                vapidKey: VAPID_PUBLIC_KEY
+            });
+            await saveTokenToDatabase(refreshedToken);
+        });
+    });
+}
