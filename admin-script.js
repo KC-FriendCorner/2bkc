@@ -689,9 +689,9 @@ document
     e.preventDefault();
     const submitBtn = document.getElementById("btnNewsSubmit");
     const statusText = document.getElementById("uploadStatus");
-    const editId = document.getElementById("editNewsId").value;
+    const editId = document.getElementById("editNewsId").value; // เช็คว่าเป็นเคสแก้ไขไหม
 
-    // ตรวจสอบรูปภาพ
+    // 1. ตรวจสอบรูปภาพ
     if (selectedFiles.length === 0 && window.existingImages.length === 0) {
       alert("กรุณาเลือกรูปภาพอย่างน้อย 1 รูป");
       return;
@@ -702,9 +702,9 @@ document
       '<i class="fas fa-spinner fa-spin"></i> กำลังดำเนินการ...';
 
     try {
-      let finalImages = [...window.existingImages]; // เอารูปเก่าที่เหลืออยู่เป็นตัวตั้ง
+      let finalImages = [...window.existingImages];
 
-      // อัปโหลดรูปใหม่ (ถ้ามี)
+      // 2. อัปโหลดรูปใหม่ (ถ้ามี)
       if (selectedFiles.length > 0) {
         for (let i = 0; i < selectedFiles.length; i++) {
           if (statusText)
@@ -724,27 +724,31 @@ document
         updated_at: new Date().toISOString(),
       };
 
+      // 3. แยกการทำงานระหว่าง "เพิ่มใหม่" กับ "แก้ไข"
       if (editId) {
+        // --- กรณีแก้ไขข่าวเดิม ---
         await database.ref(`news/${editId}`).update(newsData);
-        alert("✅ แก้ไขข้อมูลข่าวสารเรียบร้อย!");
+        alert("✅ อัปเดตข้อมูลข่าวสารเรียบร้อย!");
       } else {
+        // --- กรณีเพิ่มข่าวใหม่ ---
         newsData.created_at = new Date().toISOString();
         await database.ref("news").push(newsData);
 
-        // 🔥 สั่งแจ้งเตือนสมาชิกทุกคนทันทีที่ลงข่าวใหม่
+        // ส่งแจ้งเตือนเฉพาะข่าวใหม่เท่านั้น
         if (typeof notifyAllMembers === "function") {
-          notifyAllMembers(newsData.title);
+          await notifyAllMembers(newsData.title);
         }
-
-        alert("✅ ประกาศข่าวสารเรียบร้อย!");
+        alert("✅ ประกาศข่าวสารและส่งแจ้งเตือนเรียบร้อย!");
       }
 
-      resetNewsForm();
+      resetNewsForm(); // ล้างฟอร์มกลับเป็นปกติ
     } catch (error) {
+      console.error("Submit Error:", error);
       alert("❌ ผิดพลาด: " + error.message);
     } finally {
       submitBtn.disabled = false;
       submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> ประกาศข่าวสาร';
+      if (statusText) statusText.innerText = "";
     }
   });
 
@@ -766,38 +770,4 @@ document
 // เริ่มต้นทำงานเมื่อโหลดหน้าเว็บ
 document.addEventListener("DOMContentLoaded", () => {
   loadNewsTable();
-});
-
-document.getElementById('btnNewsSubmit').addEventListener('click', async (e) => {
-    // ป้องกันการ Refresh หน้าเว็บ (ถ้าปุ่มอยู่ใน form)
-    e.preventDefault();
-
-    // 1. ดึงข้อความจาก Input/Textarea ของคุณ (สมมติว่า id คือ newsInput)
-    const newsInput = document.getElementById('newsContent'); 
-    const newsText = newsInput ? newsInput.value.trim() : "";
-
-    if (!newsText) {
-        alert("กรุณากรอกข้อความก่อนประกาศข่าว");
-        return;
-    }
-
-    // 2. ปิดปุ่มชั่วคราวเพื่อป้องกันการกดซ้ำ (Double Click)
-    const btn = document.getElementById('btnNewsSubmit');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังส่ง...';
-
-    try {
-        // 3. เรียกใช้ฟังก์ชันแจ้งเตือนที่เราเพิ่งเขียน
-        await notifyAllMembers(newsText);
-        
-        // 4. ล้างข้อความในช่อง Input หลังจากส่งเสร็จ (ถ้าต้องการ)
-        if (newsInput) newsInput.value = "";
-        
-    } catch (error) {
-        console.error("Error at button click:", error);
-    } finally {
-        // 5. เปิดปุ่มให้กลับมาใช้งานได้ปกติ
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-paper-plane"></i> ประกาศข่าวสาร';
-    }
 });
