@@ -59,7 +59,8 @@ async function notifyAllMembers(newsText) {
     });
 
     const result = await response.json();
-    console.log("ส่งสำเร็จ:", result.count, "เครื่อง");
+    // เปลี่ยนจาก result.count เป็น result.successCount ให้ตรงกับที่ API ส่งมา
+    console.log("ส่งสำเร็จ:", result.successCount, "เครื่อง");
   } catch (err) {
     console.error("ผิดพลาด:", err);
   }

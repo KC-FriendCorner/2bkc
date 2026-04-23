@@ -20,9 +20,25 @@ firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
 // 5. (ทางเลือก) จัดการเมื่อผู้ใช้คลิกที่การแจ้งเตือน
+// 5. จัดการเมื่อผู้ใช้คลิกที่การแจ้งเตือน (เวอร์ชันรองรับลิงก์จากแอดมิน)
 self.addEventListener('notificationclick', function(event) {
     event.notification.close();
+
+    // ดึง URL จากข้อมูลที่ส่งมา (ถ้าไม่มีให้ไปหน้าข่าว)
+    const targetUrl = event.notification.data?.link || '/#news';
+
     event.waitUntil(
-        clients.openWindow('/#news') // เมื่อคลิกให้เปิดไปที่หน้าข่าว
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+            // ถ้าเปิดหน้าเว็บค้างไว้แล้ว ให้ focus ไปที่หน้านั้น
+            for (let client of clientList) {
+                if (client.url.includes(self.location.origin) && 'focus' in client) {
+                    return client.focus();
+                }
+            }
+            // ถ้ายังไม่ได้เปิดหน้าเว็บ ให้เปิดหน้าใหม่
+            if (clients.openWindow) {
+                return clients.openWindow(targetUrl);
+            }
+        })
     );
 });
