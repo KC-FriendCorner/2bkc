@@ -1,80 +1,63 @@
 const admin = require('firebase-admin');
 
-// ฟังก์ชันสำหรับ Initialize ป้องกันการรันซ้ำ
 function initFirebase() {
     if (admin.apps.length === 0) {
-        if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-            const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-            admin.initializeApp({
-                credential: admin.credential.cert(serviceAccount),
-                databaseURL: "https://bkc-bc48f-default-rtdb.asia-southeast1.firebasedatabase.app"
-            });
-        } else {
-            admin.initializeApp({
-                credential: admin.credential.cert({
-                    projectId: process.env.FIREBASE_PROJECT_ID,
-                    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-                    privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-                }),
-                databaseURL: "https://bkc-bc48f-default-rtdb.asia-southeast1.firebasedatabase.app"
-            });
-        }
+        const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT 
+            ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+            : {
+                projectId: process.env.FIREBASE_PROJECT_ID,
+                clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+                privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+            };
+
+        admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+            databaseURL: "https://bkc-bc48f-default-rtdb.asia-southeast1.firebasedatabase.app"
+        });
     }
     return admin.messaging();
 }
 
 module.exports = async (req, res) => {
-    // 1. ตั้งค่า CORS
+    // 1. CORS Headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
     try {
-        // 2. ดึงข้อมูลจาก Body มาตรวจสอบ (ย้ายมาไว้ข้างในนี้)
-        const { admin_key, tokens, token, title, body, link } = req.body;
+        // 2. รับข้อมูล (ดึง dataPayload ออกมา)
+        const { admin_key, tokens, dataPayload } = req.body;
 
-        // 3. ตรวจสอบ Admin Key ทันที
+        // 3. ตรวจสอบความปลอดภัย
         if (admin_key !== "2BKC_SECRET_2026") {
-            return res.status(403).json({ error: 'Unauthorized: Invalid Admin Key' });
+            return res.status(403).json({ error: 'รหัสลับไม่ถูกต้อง (Unauthorized)' });
         }
 
-        // 4. เตรียมข้อมูล Tokens
-        const targetTokens = tokens || (token ? [token] : []);
-
-        if (targetTokens.length === 0 || !title || !body) {
-            return res.status(400).json({ error: 'Missing tokens, title, or body' });
+        if (!tokens || tokens.length === 0 || !dataPayload) {
+            return res.status(400).json({ error: 'ข้อมูลไม่ครบถ้วน (Missing tokens or dataPayload)' });
         }
 
         const messaging = initFirebase();
-        const defaultLink = link || 'https://2bkc.smtekc.com/#news';
-        const defaultIcon = 'https://2bkc.smtekc.com/img/2bkc.jpg';
 
-        // 5. สร้างโครงสร้างข้อความ (Multicast)
+        // 4. สร้าง Payload แบบ "Data-Only" 
+        // การเอา notification: { ... } ออก จะช่วยให้ Service Worker จัดการ "เด้งเดียว" ได้แม่นยำ
         const message = {
-            notification: { title, body },
-            android: {
-                priority: 'high',
-                notification: {
-                    icon: 'stock_ticker_update',
-                    color: '#E91E63',
-                    clickAction: defaultLink,
-                }
+            data: {
+                title: dataPayload.title || "📢 ข่าวใหม่จาก 2BKC!",
+                body: dataPayload.body || "อัปเดตข่าวใหม่ล่าสุด กดอ่านได้เลย",
+                link: dataPayload.link || 'https://2bkc.smtekc.com/#news',
+                icon: dataPayload.icon || 'https://2bkc.smtekc.com/img/2bkc.jpg'
             },
             webpush: {
                 headers: { Urgency: 'high' },
-                notification: {
-                    icon: defaultIcon,
-                    requireInteraction: true,
-                },
-                fcmOptions: { link: defaultLink }
+                fcmOptions: { link: dataPayload.link || 'https://2bkc.smtekc.com/#news' }
             },
-            tokens: targetTokens,
+            tokens: tokens,
         };
 
-        // 6. ส่งแบบกลุ่ม
         const response = await messaging.sendEachForMulticast(message);
         
         return res.status(200).json({ 
