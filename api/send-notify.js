@@ -15,7 +15,7 @@ function initFirebase() {
             databaseURL: "https://bkc-bc48f-default-rtdb.asia-southeast1.firebasedatabase.app"
         });
     }
-    return admin.messaging();
+    return admin;
 }
 
 module.exports = async (req, res) => {
@@ -28,28 +28,47 @@ module.exports = async (req, res) => {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
     try {
-        // 2. รับข้อมูล (ดึง dataPayload ออกมา)
         const { admin_key, tokens, dataPayload } = req.body;
 
-        // 3. ตรวจสอบความปลอดภัย
+        // 2. Security Check
         if (admin_key !== "2BKC_SECRET_2026") {
-            return res.status(403).json({ error: 'รหัสลับไม่ถูกต้อง (Unauthorized)' });
+            return res.status(403).json({ error: 'Unauthorized' });
         }
 
-        if (!tokens || tokens.length === 0 || !dataPayload) {
-            return res.status(400).json({ error: 'ข้อมูลไม่ครบถ้วน (Missing tokens or dataPayload)' });
+        if (!tokens || !Array.isArray(tokens) || tokens.length === 0) {
+            return res.status(400).json({ error: 'No tokens provided' });
         }
 
-        const messaging = initFirebase();
+        const firebaseAdmin = initFirebase();
+        const messaging = firebaseAdmin.messaging();
+        const db = firebaseAdmin.database();
 
-        // 4. สร้าง Payload แบบ "Data-Only" 
-        // การเอา notification: { ... } ออก จะช่วยให้ Service Worker จัดการ "เด้งเดียว" ได้แม่นยำ
+        /**
+         * 3. สร้าง Payload ที่ "ดีที่สุด" สำหรับทุก Platform
+         * iOS (APNs): ต้องการ 'content-available': 1 เพื่อปลุก Service Worker
+         * Web: ใช้ 'Urgency: high'
+         */
         const message = {
             data: {
                 title: dataPayload.title || "📢 ข่าวใหม่จาก 2BKC!",
                 body: dataPayload.body || "อัปเดตข่าวใหม่ล่าสุด กดอ่านได้เลย",
                 link: dataPayload.link || 'https://2bkc.smtekc.com/#news',
-                icon: dataPayload.icon || 'https://2bkc.smtekc.com/img/2bkc.jpg'
+                icon: dataPayload.icon || 'https://2bkc.smtekc.com/img/2bkc.jpg',
+                image: dataPayload.image || dataPayload.icon || '' // สำหรับโชว์รูปใหญ่
+            },
+            android: {
+                priority: 'high'
+            },
+            apns: {
+                payload: {
+                    aps: {
+                        'content-available': 1, // ปลุก Background Process บน iOS
+                        mutableContent: 1      // อนุญาตให้แก้ไข Content (ใส่รูป/ปุ่ม)
+                    }
+                },
+                headers: {
+                    'apns-priority': '10' // ส่งทันที
+                }
             },
             webpush: {
                 headers: { Urgency: 'high' },
@@ -58,12 +77,43 @@ module.exports = async (req, res) => {
             tokens: tokens,
         };
 
+        // 4. ส่งแจ้งเตือน
         const response = await messaging.sendEachForMulticast(message);
         
+        /**
+         * 5. 🛠 ระบบ Auto-Cleanup (หัวใจของความเสถียร)
+         * ตรวจสอบว่ามี Token ไหนที่ "หมดอายุ" หรือ "ผู้ใช้บล็อกไปแล้ว" ให้ลบทิ้งทันที
+         */
+        const tokensToRemove = [];
+        if (response.failureCount > 0) {
+            response.responses.forEach((resp, idx) => {
+                if (!resp.success) {
+                    const error = resp.error;
+                    // รหัสข้อผิดพลาดที่บอกว่า Token ใช้ไม่ได้แล้ว
+                    if (
+                        error.code === 'messaging/invalid-registration-token' ||
+                        error.code === 'messaging/registration-token-not-registered'
+                    ) {
+                        const expiredToken = tokens[idx];
+                        // แปลง Token เป็น Key แบบเดียวกับที่เราเซฟ (ใช้ btoa หรือวิธีที่ตรงกัน)
+                        const safeKey = Buffer.from(expiredToken).toString('base64').substring(0, 45).replace(/[+/=]/g, "_");
+                        tokensToRemove.push(db.ref(`fcm_tokens/${safeKey}`).remove());
+                    }
+                }
+            });
+
+            // รันการลบแบบขนาน (Parallel) เพื่อไม่ให้หน่วง API
+            if (tokensToRemove.length > 0) {
+                await Promise.all(tokensToRemove);
+                console.log(`🧹 Cleaned up ${tokensToRemove.length} invalid tokens.`);
+            }
+        }
+
         return res.status(200).json({ 
             success: true, 
             successCount: response.successCount, 
-            failureCount: response.failureCount 
+            failureCount: response.failureCount,
+            cleanedCount: tokensToRemove.length
         });
 
     } catch (error) {

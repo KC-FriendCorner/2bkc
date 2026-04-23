@@ -3,17 +3,25 @@
   "short_name": "2BKC",
   "description": "ชมรมทูบีนัมเบอร์วันโรงเรียนสะเดา'ขรรค์ชัยกัมพลานนท์อนุสรณ์'",
   "start_url": "/",
+  "id": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
   "lang": "th-TH",
+  "scope": "/",
   "icons": [
     {
       "src": "img/2bkc.jpg",
       "sizes": "192x192",
       "type": "image/jpeg",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "img/2bkc.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "maskable"
     },
     {
       "src": "img/2bkc.jpg",
@@ -21,5 +29,6 @@
       "type": "image/jpeg",
       "purpose": "any"
     }
-  ]
+  ],
+  "categories": ["education", "social"]
 }
