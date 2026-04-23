@@ -2,9 +2,7 @@
  * 2BKC Notification System - Self-Healing Production Version (Enhanced iOS Support)
  */
 
-const VAPID_PUBLIC_KEY =
-  process.env.NEXT_PUBLIC_VAPID_KEY ||
-  "BGul7Ob55G5r8huiGNlqFVtkSAB72MCGD6jEuiSyRJiYYmYiq6PIEEq3jq62xIHKM1odTfDulIZwIviON0MpYmw";
+const VAPID_PUBLIC_KEY = "BGul7Ob55G5r8huiGNlqFVtkSAB72MCGD6jEuiSyRJiYYmYiq6PIEEq3jq62xIHKM1odTfDulIZwIviON0MpYmw";
 const isOnline = () => navigator.onLine;
 
 /**
