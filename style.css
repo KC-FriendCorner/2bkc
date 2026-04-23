@@ -2005,3 +2005,40 @@ body {
     margin-top: 4px;
     border-radius: 10px;
 }
+
+/* --- ส่วนของเมนูคอมพิวเตอร์ --- */
+@media (max-width: 767px) {
+    .nav-links {
+        display: none !important; /* ซ่อนเมนูแนวนอนเมื่อจอกว้างน้อยกว่า 768px */
+    }
+}
+
+@media (min-width: 768px) {
+    .nav-links {
+        display: flex; /* แสดงเมนูแนวนอนเมื่อจอใหญ่ */
+    }
+}
+
+/* --- ส่วนของเมนูมือถือ (Overlay) --- */
+
+/* 1. ถ้าจอใหญ่กว่า 767px (คอม) ให้ซ่อนทิ้งไปเลยแบบถาวร */
+@media (min-width: 768px) {
+    #mobileMenuOverlay {
+        display: none !important;
+    }
+}
+
+/* 2. ถ้าจอเล็ก (มือถือ) ปล่อยให้มันทำงานตาม Logic เดิมของคุณ */
+@media (max-width: 767px) {
+    #mobileMenuOverlay {
+        /* ไม่ต้องใส่ display: none ตรงนี้ */
+        /* ปล่อยให้ Class 'active' หรือ Logic ใน JavaScript เป็นตัวสั่ง show/hide */
+    }
+    
+    /* ตัวอย่าง: ถ้าปกติคุณใช้ class .active ในการเปิดเมนู */
+    #mobileMenuOverlay.active {
+        display: flex !important;
+        visibility: visible;
+        opacity: 1;
+    }
+}
