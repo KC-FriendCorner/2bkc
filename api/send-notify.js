@@ -3,16 +3,13 @@ const admin = require('firebase-admin');
 // ฟังก์ชันสำหรับ Initialize ป้องกันการรันซ้ำ
 function initFirebase() {
     if (admin.apps.length === 0) {
-        // กรณีใช้ก้อน JSON เดียวใน Vercel Environment Variables
         if (process.env.FIREBASE_SERVICE_ACCOUNT) {
             const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
             admin.initializeApp({
                 credential: admin.credential.cert(serviceAccount),
                 databaseURL: "https://bkc-bc48f-default-rtdb.asia-southeast1.firebasedatabase.app"
             });
-        } 
-        // กรณีแยกตัวแปร (Fallback)
-        else {
+        } else {
             admin.initializeApp({
                 credential: admin.credential.cert({
                     projectId: process.env.FIREBASE_PROJECT_ID,
@@ -27,7 +24,7 @@ function initFirebase() {
 }
 
 module.exports = async (req, res) => {
-    // CORS
+    // 1. ตั้งค่า CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -35,26 +32,33 @@ module.exports = async (req, res) => {
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
-    // รับ tokens (แบบ Array) หรือ token (แบบใบเดียว)
-    const { tokens, token, title, body, recipientUid, link } = req.body;
-    const targetTokens = tokens || (token ? [token] : []);
-
-    if (targetTokens.length === 0 || !title || !body) {
-        return res.status(400).json({ error: 'Missing tokens, title, or body' });
-    }
-
     try {
+        // 2. ดึงข้อมูลจาก Body มาตรวจสอบ (ย้ายมาไว้ข้างในนี้)
+        const { admin_key, tokens, token, title, body, link } = req.body;
+
+        // 3. ตรวจสอบ Admin Key ทันที
+        if (admin_key !== "2BKC_SECRET_2026") {
+            return res.status(403).json({ error: 'Unauthorized: Invalid Admin Key' });
+        }
+
+        // 4. เตรียมข้อมูล Tokens
+        const targetTokens = tokens || (token ? [token] : []);
+
+        if (targetTokens.length === 0 || !title || !body) {
+            return res.status(400).json({ error: 'Missing tokens, title, or body' });
+        }
+
         const messaging = initFirebase();
         const defaultLink = link || 'https://2bkc.smtekc.com/#news';
         const defaultIcon = 'https://2bkc.smtekc.com/img/2bkc.jpg';
 
-        // สร้างโครงสร้างข้อความ (Multicast)
+        // 5. สร้างโครงสร้างข้อความ (Multicast)
         const message = {
             notification: { title, body },
             android: {
                 priority: 'high',
                 notification: {
-                    icon: 'stock_ticker_update', // หรือชื่อ icon ในโปรเจกต์
+                    icon: 'stock_ticker_update',
                     color: '#E91E63',
                     clickAction: defaultLink,
                 }
@@ -67,10 +71,10 @@ module.exports = async (req, res) => {
                 },
                 fcmOptions: { link: defaultLink }
             },
-            tokens: targetTokens, // ใส่เป็น Array
+            tokens: targetTokens,
         };
 
-        // เปลี่ยนเป็นส่งแบบกลุ่ม
+        // 6. ส่งแบบกลุ่ม
         const response = await messaging.sendEachForMulticast(message);
         
         return res.status(200).json({ 
@@ -84,11 +88,3 @@ module.exports = async (req, res) => {
         return res.status(500).json({ error: error.message });
     }
 };
-
-// รับ admin_key จาก body
-const { admin_key, tokens, title, body, link } = req.body;
-
-// ตรวจสอบความถูกต้อง
-if (admin_key !== "2BKC_SECRET_2026") {
-    return res.status(403).json({ error: 'Unauthorized: Invalid Admin Key' });
-}
