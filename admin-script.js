@@ -767,3 +767,37 @@ document
 document.addEventListener("DOMContentLoaded", () => {
   loadNewsTable();
 });
+
+document.getElementById('btnNewsSubmit').addEventListener('click', async (e) => {
+    // ป้องกันการ Refresh หน้าเว็บ (ถ้าปุ่มอยู่ใน form)
+    e.preventDefault();
+
+    // 1. ดึงข้อความจาก Input/Textarea ของคุณ (สมมติว่า id คือ newsInput)
+    const newsInput = document.getElementById('newsContent'); 
+    const newsText = newsInput ? newsInput.value.trim() : "";
+
+    if (!newsText) {
+        alert("กรุณากรอกข้อความก่อนประกาศข่าว");
+        return;
+    }
+
+    // 2. ปิดปุ่มชั่วคราวเพื่อป้องกันการกดซ้ำ (Double Click)
+    const btn = document.getElementById('btnNewsSubmit');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังส่ง...';
+
+    try {
+        // 3. เรียกใช้ฟังก์ชันแจ้งเตือนที่เราเพิ่งเขียน
+        await notifyAllMembers(newsText);
+        
+        // 4. ล้างข้อความในช่อง Input หลังจากส่งเสร็จ (ถ้าต้องการ)
+        if (newsInput) newsInput.value = "";
+        
+    } catch (error) {
+        console.error("Error at button click:", error);
+    } finally {
+        // 5. เปิดปุ่มให้กลับมาใช้งานได้ปกติ
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> ประกาศข่าวสาร';
+    }
+});

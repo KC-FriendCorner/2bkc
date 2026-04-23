@@ -84,3 +84,11 @@ module.exports = async (req, res) => {
         return res.status(500).json({ error: error.message });
     }
 };
+
+// รับ admin_key จาก body
+const { admin_key, tokens, title, body, link } = req.body;
+
+// ตรวจสอบความถูกต้อง
+if (admin_key !== "2BKC_SECRET_2026") {
+    return res.status(403).json({ error: 'Unauthorized: Invalid Admin Key' });
+}
