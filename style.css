@@ -2334,3 +2334,161 @@ body {
 .show-flex {
     display: flex !important;
 }
+
+
+
+
+/* จัดตำแหน่งเดิม */
+.fixed-bottom-center {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+}
+
+/* ตัวปุ่มหลัก (ม่วง-ทอง-อลังการ) */
+.ultra-luxury-button {
+    display: flex;
+    align-items: center;
+    padding: 12px 35px 12px 20px; /* ปรับ Padding ให้สมดุล */
+    background: linear-gradient(135deg, #4b0082 0%, #800080 100%);
+    border: 2px solid #ffd700;
+    border-radius: 100px;
+    text-decoration: none !important;
+    position: relative;
+    box-shadow: 0 0 25px rgba(128, 0, 128, 0.6);
+    animation: floatVertical 3s ease-in-out infinite;
+    transition: all 0.4s ease;
+}
+
+/* ส่วนจัดการรูปภาพ PNG (ไม่มีพื้นหลัง/ไม่มีกรอบ) */
+.logo-container {
+    width: 50px; /* ปรับขนาดตามต้องการ */
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.5)); /* เพิ่มเงาสีทองรอบตัวรูป */
+    z-index: 2;
+}
+
+.brand-logo {
+    max-width: 85%;
+    max-height: 85%;
+    object-fit: contain;
+    /* อนิเมชั่นหมุนหรือสั่นเบาๆ ให้รูปดูมีชีวิต */
+    animation: logoPulse 3s ease-in-out infinite;
+}
+
+/* ข้อความ */
+.text-group {
+    display: flex;
+    flex-direction: column;
+    z-index: 2;
+}
+
+.sub-txt {
+    color: #ffd700;
+    font-size: 9px;
+    font-weight: 300;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: -5px;
+}
+
+.main-txt {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    
+    /* เอฟเฟกต์ไล่สี ขาว-เงิน-เทา ให้ความรู้สึกเหมือนโลหะขัดเงา */
+    background: linear-gradient(
+        to right, 
+        #ffffff 0%, 
+        #e0e0e0 25%, 
+        #ffffff 50%, 
+        #a8a8a8 75%, 
+        #ffffff 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    
+    /* เงาเรืองแสงสีขาวเงินแบบนวลๆ แทนที่สีทอง */
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5))
+            drop-shadow(0 0 8px rgba(200, 200, 255, 0.3));
+    
+    /* อนิเมชั่นให้สีเงินไหลผ่านตัวอักษร */
+    animation: shineText 3s linear infinite; 
+    
+    display: inline-block;
+    position: relative;
+}
+
+/* อนิเมชั่นให้แสงสีทองวิ่งผ่านตัวอักษร */
+@keyframes shineText {
+    to {
+        background-position: 200% center;
+    }
+}
+
+/* --- เอฟเฟกต์อนิเมชั่นอลังการ --- */
+
+/* แสงวิ่งผ่านปุ่ม */
+.shine-effect {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    transform: skewX(-30deg);
+    animation: shine 4s infinite;
+}
+
+/* วงแหวนกระจายสีทอง */
+.ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 1.5px solid #ffd700;
+    border-radius: 100px;
+    opacity: 0;
+    z-index: -1;
+}
+
+.r1 { animation: ringPulse 3s infinite 0s; width: 100%; height: 100%; }
+.r2 { animation: ringPulse 3s infinite 1s; width: 110%; height: 110%; }
+.r3 { animation: ringPulse 3s infinite 2s; width: 120%; height: 120%; }
+
+@keyframes floatVertical {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+}
+
+@keyframes logoPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+@keyframes shine {
+    0% { left: -100%; }
+    20% { left: 150%; }
+    100% { left: 150%; }
+}
+
+@keyframes ringPulse {
+    0% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+    100% { transform: translate(-50%, -50%) scale(1.4); opacity: 0; }
+}
+
+/* Hover Effect: เมื่อเอาเมาส์ชี้จะเรืองแสงหนักกว่าเดิม */
+.ultra-luxury-button:hover {
+    transform: scale(1.08);
+    box-shadow: 0 0 50px rgba(255, 215, 0, 0.4);
+    filter: brightness(1.1);
+}
