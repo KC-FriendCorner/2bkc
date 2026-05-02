@@ -1485,18 +1485,24 @@ body {
 }
 
 .profile-circle {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 4px solid #eef2ff;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    width: 100px;          /* ขนาดความกว้าง */
+    height: 100px;         /* ขนาดความสูง */
+    border-radius: 50%;
+    overflow: hidden;
+    
+    /* --- วิธีแก้รูปเบี้ยวจากข้อความเบียด --- */
+    flex-shrink: 0;        /* บังคับไม่ให้รูปโดนบีบเด็ดขาด */
+    display: block;
+    
+    border: 3px solid #ffffff;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
 .profile-circle img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;     /* แก้รูปแบน/บีบแนวตั้ง */
+    object-position: center;
 }
 
 .profile-main-info h2 {
@@ -1897,19 +1903,44 @@ body {
 
 /* ตกแต่งปุ่มย้อนกลับ */
 .btn-back-news {
-    background: #f8f9fa;
-    border: 1px solid #ddd;
-    padding: 8px 16px;
-    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1); /* พื้นหลังขาวโปร่งแสง */
+    color: #000000;
+    border: 1.5px solid rgba(255, 255, 255, 0.3); /* ขอบเงินจางๆ */
+    padding: 10px 22px;
+    border-radius: 50px; /* ทรงแคปซูล ดูทันสมัยกว่า */
     cursor: pointer;
-    font-size: 1rem;
-    margin-bottom: 20px;
-    transition: all 0.3s;
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-bottom: 25px;
+    margin-top: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px; /* ระยะห่างไอคอนกับข้อความ */
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    backdrop-filter: blur(10px); /* เอฟเฟกต์กระจกฝ้า */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
+
+.btn-back-news i {
+    transition: transform 0.3s ease;
+}
+
 .btn-back-news:hover {
-    background: #e11d48;
-    color: white;
-    border-color: #e11d48;
+    background: #ffffff; /* เปลี่ยนเป็นสีขาวบริสุทธิ์ */
+    color: #4b0082; /* ตัวอักษรสีม่วงเข้ม */
+    border-color: #ffffff;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+    transform: translateX(-5px); /* ขยับไปทางซ้ายเล็กน้อยตามทิศทางลูกศร */
+}
+
+.btn-back-news:hover i {
+    transform: translateX(-3px); /* ไอคอนลูกศรขยับแยกต่างหาก */
+}
+
+.btn-back-news:active {
+    transform: scale(0.95); /* กดแล้วยุบเบาๆ */
 }
 
 /* จัดเลย์เอาต์หน้าเนื้อหา */
@@ -2491,4 +2522,33 @@ body {
     transform: scale(1.08);
     box-shadow: 0 0 50px rgba(255, 215, 0, 0.4);
     filter: brightness(1.1);
+}
+
+/* ลดความละเอียดในการประมวลผล (Rendering) เพื่อประหยัด RAM */
+.slider-img, .news-gallery-item img {
+    image-rendering: -webkit-optimize-contrast; /* เพิ่มความคมชัดโดยใช้ทรัพยากรต่ำ */
+    transform: translateZ(0); /* บังคับใช้ GPU Acceleration แบบประหยัด */
+    backface-visibility: hidden;
+}
+
+/* ถ้าต้องการให้รูปดูเบาลง (Blur เล็กน้อยแต่โหลดเร็วขึ้นทางสายตา) */
+.news-card img {
+    filter: brightness(0.95);
+    transition: filter 0.3s ease;
+}
+
+/* บังคับให้เบราว์เซอร์จัดลำดับความสำคัญของรูปภาพที่มองเห็น */
+.slider-img {
+    will-change: transform; /* ช่วยให้การ Slide ลื่นขึ้น */
+    backface-visibility: hidden;
+    -webkit-perspective: 1000;
+    image-rendering: -webkit-optimize-contrast; /* ลดความหยักและช่วยให้ประมวลผลเร็วขึ้น */
+}
+
+/* ลดขนาดการประมวลผลของรูปใน Grid */
+.news-gallery-item img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    content-visibility: auto; /* ฟีเจอร์ใหม่ช่วยให้ Render เฉพาะที่อยู่ในจอ */
 }

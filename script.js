@@ -6,56 +6,56 @@
 // ==========================================
 
 function navigateTo(pageId) {
-    // 1. อัปเดต URL เป็นแบบ Hash (เช่น index.html#members)
-    // วิธีนี้ Refresh ยังไงก็ไม่ Error 404
-    window.location.hash = pageId;
+  // 1. อัปเดต URL เป็นแบบ Hash (เช่น index.html#members)
+  // วิธีนี้ Refresh ยังไงก็ไม่ Error 404
+  window.location.hash = pageId;
 
-    // 2. เรียกฟังก์ชันแสดงผลหน้าจอ
-    showPage(pageId);
+  // 2. เรียกฟังก์ชันแสดงผลหน้าจอ
+  showPage(pageId);
 }
 
 function showPage(pageId) {
-    const pages = document.querySelectorAll(".page-content");
-    let targetFound = false;
+  const pages = document.querySelectorAll(".page-content");
+  let targetFound = false;
 
-    // 3. จัดการการซ่อน/แสดง Content ด้วย Class และ Display
-    pages.forEach((page) => {
-        if (page.id === pageId) {
-            page.style.display = "block";
-            // เพิ่ม class active สำหรับทำแอนิเมชั่น Fade-in (ถ้ามี)
-            setTimeout(() => page.classList.add("active"), 10); 
-            targetFound = true;
-        } else {
-            page.style.display = "none";
-            page.classList.remove("active");
-        }
-    });
-
-    // ถ้าพิมพ์ URL มั่วมา ให้กลับไปหน้าหลัก
-    if (!targetFound && pageId !== 'home') {
-        navigateTo('home');
-        return;
+  // 3. จัดการการซ่อน/แสดง Content ด้วย Class และ Display
+  pages.forEach((page) => {
+    if (page.id === pageId) {
+      page.style.display = "block";
+      // เพิ่ม class active สำหรับทำแอนิเมชั่น Fade-in (ถ้ามี)
+      setTimeout(() => page.classList.add("active"), 10);
+      targetFound = true;
+    } else {
+      page.style.display = "none";
+      page.classList.remove("active");
     }
+  });
 
-    // 4. เลื่อนขึ้นบนสุด
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  // ถ้าพิมพ์ URL มั่วมา ให้กลับไปหน้าหลัก
+  if (!targetFound && pageId !== "home") {
+    navigateTo("home");
+    return;
+  }
 
-    // 5. อัปเดตสถานะเมนู (Navbar)
-    updateNavUI(pageId);
+  // 4. เลื่อนขึ้นบนสุด
+  window.scrollTo({ top: 0, behavior: "smooth" });
+
+  // 5. อัปเดตสถานะเมนู (Navbar)
+  updateNavUI(pageId);
 }
 
 // ฟังก์ชันอัปเดตสีปุ่มใน Navbar
 function updateNavUI(pageId) {
-    const navItems = document.querySelectorAll(".nav-item");
-    navItems.forEach((item) => {
-        // ตรวจสอบว่าปุ่มนี้มี onclick ที่ตรงกับหน้าปัจจุบันไหม
-        const isSelected = item.getAttribute("onclick")?.includes(`'${pageId}'`);
-        if (isSelected) {
-            item.classList.add("nav-active"); // ใช้ class ตามที่คุณตั้งใน CSS
-        } else {
-            item.classList.remove("nav-active");
-        }
-    });
+  const navItems = document.querySelectorAll(".nav-item");
+  navItems.forEach((item) => {
+    // ตรวจสอบว่าปุ่มนี้มี onclick ที่ตรงกับหน้าปัจจุบันไหม
+    const isSelected = item.getAttribute("onclick")?.includes(`'${pageId}'`);
+    if (isSelected) {
+      item.classList.add("nav-active"); // ใช้ class ตามที่คุณตั้งใน CSS
+    } else {
+      item.classList.remove("nav-active");
+    }
+  });
 }
 
 // ==========================================
@@ -64,15 +64,15 @@ function updateNavUI(pageId) {
 
 // 1. เมื่อโหลดหน้าเว็บครั้งแรก (รวมถึงตอน Refresh)
 window.addEventListener("load", () => {
-    // อ่านค่าจาก Hash เช่น #members -> members
-    const path = window.location.hash.replace("#", "") || "home";
-    showPage(path);
+  // อ่านค่าจาก Hash เช่น #members -> members
+  const path = window.location.hash.replace("#", "") || "home";
+  showPage(path);
 });
 
 // 2. เมื่อมีการเปลี่ยน Hash (เช่น กดปุ่ม Back/Forward ของ Browser)
 window.addEventListener("hashchange", () => {
-    const path = window.location.hash.replace("#", "") || "home";
-    showPage(path);
+  const path = window.location.hash.replace("#", "") || "home";
+  showPage(path);
 });
 
 // ==========================================
@@ -89,7 +89,10 @@ function showMemberDetail(encodedData) {
     <div class="member-detail-wrapper">
         <div class="member-header">
             <div class="profile-circle">
-                <img src="${member.image_url}" loading="lazy" onerror="this.src='https://via.placeholder.com/150'">
+                <img src="${member.image_url}" 
+                    loading="lazy" 
+                    style="width: 100%; height: 100%; object-fit: cover; object-position: center top;" 
+                    onerror="this.src='https://via.placeholder.com/150'">
             </div>
             <div class="profile-main-info">
                 <h2>${member.prefix}${member.first_name} ${member.last_name} (${member.nickname || "-"})</h2>
@@ -191,9 +194,7 @@ function initNewsSystem() {
   const newsContainer = document.getElementById("newsContainer");
   if (!newsContainer) return;
 
-  // ดึงข้อมูล Real-time จาก Firebase
   database.ref("news").on("value", (snapshot) => {
-    // ล้างค่าเก่า
     activeSliders.forEach((interval) => clearInterval(interval));
     activeSliders = [];
     newsContainer.innerHTML = "";
@@ -205,16 +206,11 @@ function initNewsSystem() {
       return;
     }
 
-    // แปลงเป็น Array และเรียงลำดับ (วันที่ล่าสุดขึ้นก่อน)
     const newsList = Object.keys(localNewsData)
-      .map((key) => ({
-        id: key,
-        ...localNewsData[key],
-      }))
+      .map((key) => ({ id: key, ...localNewsData[key] }))
       .sort((a, b) => new Date(b.date) - new Date(a.date));
 
     newsList.forEach((news) => {
-      // จัดเตรียมรูปสำหรับ Slider หน้าปก (รูปปก + รูปเพิ่มเติม)
       const slideImages =
         news.more_images && news.more_images.length > 0
           ? news.more_images
@@ -222,40 +218,44 @@ function initNewsSystem() {
 
       const card = document.createElement("div");
       card.className = "news-card";
-      // ให้คลิกที่ตัว Card เพื่อเปิด Modal ได้เลย
       card.onclick = (e) => {
         if (!e.target.closest(".btn-view-more")) openNewsModal(news.id);
       };
 
+      // ปรับปรุง: เพิ่ม loading="lazy" และ decoding="async" ให้กับทุกรูปใน Slider
       const sliderHtml = `
-                <div class="news-slider">
-                    <div class="slider-track" id="track-${news.id}" style="width: ${slideImages.length * 100}%; display: flex; transition: transform 0.8s cubic-bezier(0.45, 0, 0.55, 1);">
-                        ${slideImages
-                          .map(
-                            (url) => `
-                            <img src="${url}" class="slider-img" style="width: ${100 / slideImages.length}%; height: 240px; object-fit: cover;" onerror="this.src='img/default-news.jpg'">
-                        `,
-                          )
-                          .join("")}
-                    </div>
-                </div>
-            `;
+        <div class="news-slider">
+            <div class="slider-track" id="track-${news.id}" style="width: ${slideImages.length * 100}%; display: flex; transition: transform 0.8s cubic-bezier(0.45, 0, 0.55, 1);">
+                ${slideImages
+                  .map(
+                    (url) => `
+                    <img src="${url}" 
+                         class="slider-img" 
+                         loading="lazy" 
+                         decoding="async"
+                         style="width: ${100 / slideImages.length}%; height: 240px; object-fit: cover;" 
+                         onerror="this.src='img/default-news.jpg'">
+                `,
+                  )
+                  .join("")}
+            </div>
+        </div>
+      `;
 
       card.innerHTML = `
-                ${sliderHtml}
-                <div class="news-info">
-                    <span class="news-date"><i class="far fa-calendar-alt"></i> ${news.date}</span>
-                    <h3 class="news-title">${news.title}</h3>
-                    <p class="news-desc">${news.content.substring(0, 100)}${news.content.length > 100 ? "..." : ""}</p>
-                    <button class="btn-view-more" onclick="openNewsModal('${news.id}')">
-                        <i class="fas fa-plus-circle"></i> ดูรายละเอียด
-                    </button>
-                </div>
-            `;
+        ${sliderHtml}
+        <div class="news-info">
+            <span class="news-date"><i class="far fa-calendar-alt"></i> ${news.date}</span>
+            <h3 class="news-title">${news.title}</h3>
+            <p class="news-desc">${news.content.substring(0, 100)}${news.content.length > 100 ? "..." : ""}</p>
+            <button class="btn-view-more" onclick="openNewsModal('${news.id}')">
+                <i class="fas fa-plus-circle"></i> ดูรายละเอียด
+            </button>
+        </div>
+      `;
 
       newsContainer.appendChild(card);
 
-      // เริ่ม Auto Slide ถ้ามีมากกว่า 1 รูป
       if (slideImages.length > 1) {
         startAutoSlide(news.id, slideImages.length);
       }
@@ -284,32 +284,32 @@ function openNewsModal(newsId) {
   const item = localNewsData[newsId];
   if (!item) return;
 
-  // 1. เติมข้อมูลลงในหน้า Detail
   document.getElementById("newsModalTitle").innerText = item.title;
   document.getElementById("newsModalDate").innerHTML =
     `<i class="far fa-calendar-alt"></i> โพสต์เมื่อ: ${item.date}`;
   document.getElementById("newsModalBody").innerHTML = item.content.replace(
     /\n/g,
     "<br>",
-  ); // รองรับการขึ้นบรรทัดใหม่
+  );
 
-  // 2. จัดการรูปภาพประกอบ
   const gallery = document.getElementById("newsModalImages");
   gallery.innerHTML = "";
   const allImages = item.more_images || (item.image ? [item.image] : []);
 
   allImages.forEach((imgUrl) => {
     gallery.innerHTML += `
-            <div class="news-gallery-item">
-                <img src="${imgUrl}" onclick="window.open('${imgUrl}', '_blank')" alt="News Image">
-            </div>`;
+        <div class="news-gallery-item">
+            <img src="${imgUrl}" 
+                 loading="lazy" 
+                 decoding="async"
+                 onclick="window.open('${imgUrl}', '_blank')" 
+                 alt="News Image"
+                 style="image-rendering: -webkit-optimize-contrast;">
+        </div>`;
   });
 
-  // 3. สลับหน้า: ซ่อน List และโชว์ Detail
   document.getElementById("newsListView").style.display = "none";
   document.getElementById("newsDetailView").style.display = "block";
-
-  // เลื่อนหน้าจอขึ้นไปบนสุด
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -333,142 +333,149 @@ window.addEventListener("click", (e) => {
   }
 });
 
-
-
-
 // ==========================================
 // ระบบติดตั้งแอป 2BKC (Ultimate Hybrid Version - Fixed iPadOS)
 // ==========================================
 
 (function () {
-    // 1. ประกาศตัวแปรหลัก
-    let deferredPrompt = null;
-    const installContainer = document.querySelector('.install-fab-container');
-    const btnInstall = document.getElementById('btnInstall');
+  // 1. ประกาศตัวแปรหลัก
+  let deferredPrompt = null;
+  const installContainer = document.querySelector(".install-fab-container");
+  const btnInstall = document.getElementById("btnInstall");
 
-    // Elements ของ Custom Modal
-    const customModal = document.getElementById('custom-install-modal');
-    const modalConfirm = document.getElementById('modal-confirm');
-    const modalCancel = document.getElementById('modal-cancel');
-    const modalTitle = customModal?.querySelector('.modal-body h3');
-    const modalBody = customModal?.querySelector('.modal-body p');
+  // Elements ของ Custom Modal
+  const customModal = document.getElementById("custom-install-modal");
+  const modalConfirm = document.getElementById("modal-confirm");
+  const modalCancel = document.getElementById("modal-cancel");
+  const modalTitle = customModal?.querySelector(".modal-body h3");
+  const modalBody = customModal?.querySelector(".modal-body p");
 
-    // 2. ฟังก์ชันตรวจสอบอุปกรณ์ (รองรับ iPhone และ iPadOS รุ่นใหม่)
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  // 2. ฟังก์ชันตรวจสอบอุปกรณ์ (รองรับ iPhone และ iPadOS รุ่นใหม่)
+  const isIOS =
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
-    const isStandalone = () => {
-        return window.matchMedia('(display-mode: standalone)').matches ||
-            window.navigator.standalone === true;
-    };
+  const isStandalone = () => {
+    return (
+      window.matchMedia("(display-mode: standalone)").matches ||
+      window.navigator.standalone === true
+    );
+  };
 
-    const closeModal = () => {
-        if (customModal) {
-            customModal.classList.remove('active');
-            setTimeout(() => { customModal.style.display = 'none'; }, 300);
-        }
-    };
+  const closeModal = () => {
+    if (customModal) {
+      customModal.classList.remove("active");
+      setTimeout(() => {
+        customModal.style.display = "none";
+      }, 300);
+    }
+  };
 
-    // --- เริ่มต้นการทำงาน (Hybrid Logic) ---
+  // --- เริ่มต้นการทำงาน (Hybrid Logic) ---
 
-    const initInstallUI = () => {
-        // ถ้าติดตั้งแอปแล้ว ไม่ต้องทำอะไรต่อ
-        if (isStandalone()) {
-            if (installContainer) installContainer.style.display = 'none';
-            return;
-        }
-
-        // กรณี iOS/iPadOS: บังคับโชว์ปุ่มทันที เพราะระบบไม่มี Event อัตโนมัติ
-        if (isIOS) {
-            if (installContainer) {
-                // ใช้ setProperty เพื่อให้มั่นใจว่า CSS display จะถูกทับแน่นอน
-                installContainer.style.setProperty('display', 'flex', 'important');
-            }
-            console.log('🍎 iOS/iPadOS Mode: Show button immediately');
-        }
-    };
-
-    // รันเช็คเบื้องต้นทันที
-    initInstallUI();
-
-    // 3. สำหรับ Android/Chrome: ดักจับ Event (มักจะมาช้าตามรอบเบราว์เซอร์)
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-
-        // ถ้าไม่ใช่ iOS และยังไม่ได้ติดตั้ง ให้แสดงปุ่มเมื่อ Event มาถึง
-        if (!isIOS && installContainer && !isStandalone()) {
-            installContainer.style.setProperty('display', 'flex', 'important');
-            console.log('🤖 Android Mode: Prompt Ready');
-        }
-    });
-
-    // 4. เมื่อคลิกปุ่มติดตั้งหลัก
-    if (btnInstall) {
-        btnInstall.addEventListener('click', () => {
-            if (isIOS) {
-                // เนื้อหาพิเศษสำหรับ iOS/iPadOS
-                if (modalTitle) modalTitle.innerText = "ติดตั้ง 2BKC บน ios";
-                if (modalBody) modalBody.innerHTML = "1. กดปุ่ม <b>'แชร์' (Share)</b> ด้านบนขวาของเบราว์เซอร์<br>2. เลือกเมนู <b>'เพิ่มลงในหน้าจอโฮม'</b><br>(Add to Home Screen)";
-
-                // ซ่อนปุ่ม "ติดตั้งเลย" เพราะ iOS บังคับให้กดผ่านเมนู Safari เท่านั้น
-                if (modalConfirm) modalConfirm.style.display = 'none';
-
-                customModal.style.display = 'flex';
-                requestAnimationFrame(() => customModal.classList.add('active'));
-            }
-            else if (deferredPrompt) {
-                // เนื้อหาปกติสำหรับ Android
-                if (modalTitle) modalTitle.innerText = "ติดตั้ง 2BKC";
-                if (modalBody) modalBody.innerText = "เพิ่ม 2BKC ไว้บนหน้าจอหลัก เพื่อสามารถเข้าใช้งานได้อย่างรวดเร็วจ้าาา!";
-                if (modalConfirm) {
-                    modalConfirm.style.display = 'block';
-                    modalConfirm.innerText = "ติดตั้งเลย";
-                }
-
-                customModal.style.display = 'flex';
-                requestAnimationFrame(() => customModal.classList.add('active'));
-            } else {
-                alert('ขออภัย! ระบบยังไม่พร้อมติดตั้งในขณะนี้ หรือคุณได้ติดตั้งแอปไปแล้วครับ');
-            }
-        });
+  const initInstallUI = () => {
+    // ถ้าติดตั้งแอปแล้ว ไม่ต้องทำอะไรต่อ
+    if (isStandalone()) {
+      if (installContainer) installContainer.style.display = "none";
+      return;
     }
 
-    // 5. กดยืนยันติดตั้ง (เฉพาะ Android/PC)
-    if (modalConfirm) {
-        modalConfirm.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                closeModal();
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    if (installContainer) installContainer.style.display = 'none';
-                }
-                deferredPrompt = null;
-            }
-        });
+    // กรณี iOS/iPadOS: บังคับโชว์ปุ่มทันที เพราะระบบไม่มี Event อัตโนมัติ
+    if (isIOS) {
+      if (installContainer) {
+        // ใช้ setProperty เพื่อให้มั่นใจว่า CSS display จะถูกทับแน่นอน
+        installContainer.style.setProperty("display", "flex", "important");
+      }
+      console.log("🍎 iOS/iPadOS Mode: Show button immediately");
     }
+  };
 
-    if (modalCancel) modalCancel.addEventListener('click', closeModal);
+  // รันเช็คเบื้องต้นทันที
+  initInstallUI();
 
-    // ปิดเมื่อคลิกนอก Modal
-    customModal?.addEventListener('click', (e) => {
-        if (e.target === customModal) closeModal();
+  // 3. สำหรับ Android/Chrome: ดักจับ Event (มักจะมาช้าตามรอบเบราว์เซอร์)
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+
+    // ถ้าไม่ใช่ iOS และยังไม่ได้ติดตั้ง ให้แสดงปุ่มเมื่อ Event มาถึง
+    if (!isIOS && installContainer && !isStandalone()) {
+      installContainer.style.setProperty("display", "flex", "important");
+      console.log("🤖 Android Mode: Prompt Ready");
+    }
+  });
+
+  // 4. เมื่อคลิกปุ่มติดตั้งหลัก
+  if (btnInstall) {
+    btnInstall.addEventListener("click", () => {
+      if (isIOS) {
+        // เนื้อหาพิเศษสำหรับ iOS/iPadOS
+        if (modalTitle) modalTitle.innerText = "ติดตั้ง 2BKC บน ios";
+        if (modalBody)
+          modalBody.innerHTML =
+            "1. กดปุ่ม <b>'แชร์' (Share)</b> ด้านบนขวาของเบราว์เซอร์<br>2. เลือกเมนู <b>'เพิ่มลงในหน้าจอโฮม'</b><br>(Add to Home Screen)";
+
+        // ซ่อนปุ่ม "ติดตั้งเลย" เพราะ iOS บังคับให้กดผ่านเมนู Safari เท่านั้น
+        if (modalConfirm) modalConfirm.style.display = "none";
+
+        customModal.style.display = "flex";
+        requestAnimationFrame(() => customModal.classList.add("active"));
+      } else if (deferredPrompt) {
+        // เนื้อหาปกติสำหรับ Android
+        if (modalTitle) modalTitle.innerText = "ติดตั้ง 2BKC";
+        if (modalBody)
+          modalBody.innerText =
+            "เพิ่ม 2BKC ไว้บนหน้าจอหลัก เพื่อสามารถเข้าใช้งานได้อย่างรวดเร็วจ้าาา!";
+        if (modalConfirm) {
+          modalConfirm.style.display = "block";
+          modalConfirm.innerText = "ติดตั้งเลย";
+        }
+
+        customModal.style.display = "flex";
+        requestAnimationFrame(() => customModal.classList.add("active"));
+      } else {
+        alert(
+          "ขออภัย! ระบบยังไม่พร้อมติดตั้งในขณะนี้ หรือคุณได้ติดตั้งแอปไปแล้วครับ",
+        );
+      }
     });
+  }
 
-    // 6. ซ่อนปุ่มเมื่อติดตั้งสำเร็จ
-    window.addEventListener('appinstalled', () => {
-        if (installContainer) installContainer.style.display = 'none';
+  // 5. กดยืนยันติดตั้ง (เฉพาะ Android/PC)
+  if (modalConfirm) {
+    modalConfirm.addEventListener("click", async () => {
+      if (deferredPrompt) {
         closeModal();
-        console.log('🚀 Installed successfully');
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === "accepted") {
+          if (installContainer) installContainer.style.display = "none";
+        }
+        deferredPrompt = null;
+      }
     });
+  }
 
+  if (modalCancel) modalCancel.addEventListener("click", closeModal);
+
+  // ปิดเมื่อคลิกนอก Modal
+  customModal?.addEventListener("click", (e) => {
+    if (e.target === customModal) closeModal();
+  });
+
+  // 6. ซ่อนปุ่มเมื่อติดตั้งสำเร็จ
+  window.addEventListener("appinstalled", () => {
+    if (installContainer) installContainer.style.display = "none";
+    closeModal();
+    console.log("🚀 Installed successfully");
+  });
 })();
 
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js')
-            .then(reg => console.log('Service Worker Registered!', reg))
-            .catch(err => console.log('Service Worker Registration Failed:', err));
-    });
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("sw.js")
+      .then((reg) => console.log("Service Worker Registered!", reg))
+      .catch((err) => console.log("Service Worker Registration Failed:", err));
+  });
 }
